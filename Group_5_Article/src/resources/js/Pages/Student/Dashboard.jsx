@@ -1,0 +1,388 @@
+import React, { useState } from 'react';
+import { Head, Link, router } from '@inertiajs/react';
+import {
+    Container,
+    Typography,
+    Box,
+    Paper,
+    Grid,
+    Button,
+    Card,
+    CardContent,
+    CardActions,
+    TextField,
+    Alert,
+    Fade,
+    Slide,
+    AppBar,
+    Toolbar,
+    Drawer,
+    List,
+    ListItem,
+    ListItemIcon,
+    ListItemText,
+    Divider,
+    IconButton,
+    Avatar,
+    Chip,
+    Menu as MuiMenu,
+    MenuItem as MuiMenuItem
+} from '@mui/material';
+import {
+    Article,
+    Comment,
+    Menu,
+    Dashboard,
+    Visibility,
+    Chat,
+    Person,
+    Logout
+} from '@mui/icons-material';
+
+const drawerWidth = 240;
+
+const StudentDashboard = ({ publishedArticles, myComments }) => {
+    const [drawerOpen, setDrawerOpen] = useState(false);
+    const [comments, setComments] = useState({});
+    const [selectedArticle, setSelectedArticle] = useState(null);
+    const [anchorEl, setAnchorEl] = useState(null);
+
+    const handleComment = (articleId) => {
+        const content = comments[articleId];
+        if (content && content.trim()) {
+            router.post(`/student/articles/${articleId}/comment`, {
+                content: content
+            }, {
+                onSuccess: () => {
+                    setComments(prev => ({ ...prev, [articleId]: '' }));
+                    window.location.reload();
+                }
+            });
+        }
+    };
+
+    const handleCommentChange = (articleId, value) => {
+        setComments(prev => ({ ...prev, [articleId]: value }));
+    };
+
+    const handleViewArticle = (article) => {
+        setSelectedArticle(article);
+        router.get(`/student/articles/${article.id}`);
+    };
+
+    const handleLogout = () => {
+        router.post('/logout');
+    };
+
+    const switchRole = (role) => {
+        router.post(`/switch-role/${role}`);
+    };
+
+    const handleMenuClick = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleMenuClose = () => {
+        setAnchorEl(null);
+    };
+
+    const drawer = (
+        <div>
+            <Toolbar>
+                <Typography variant="h6" noWrap component="div">
+                    Student Panel
+                </Typography>
+            </Toolbar>
+            <Divider />
+            <List>
+                <ListItem button>
+                    <ListItemIcon>
+                        <Dashboard />
+                    </ListItemIcon>
+                    <ListItemText primary="Dashboard" />
+                </ListItem>
+                <ListItem button>
+                    <ListItemIcon>
+                        <Article />
+                    </ListItemIcon>
+                    <ListItemText primary="Published Articles" />
+                </ListItem>
+                <ListItem button>
+                    <ListItemIcon>
+                        <Comment />
+                    </ListItemIcon>
+                    <ListItemText primary="My Comments" />
+                </ListItem>
+            </List>
+        </div>
+    );
+
+    return (
+        <>
+            <Head title="Student Dashboard" />
+            <Box sx={{ display: 'flex' }}>
+                <AppBar
+                    position="fixed"
+                    sx={{ width: `calc(100% - ${drawerWidth}px)`, ml: `${drawerWidth}px` }}
+                >
+                    <Toolbar>
+                        <IconButton
+                            color="inherit"
+                            aria-label="open drawer"
+                            edge="start"
+                            onClick={() => setDrawerOpen(!drawerOpen)}
+                            sx={{ mr: 2, display: { sm: 'none' } }}
+                        >
+                            <Menu />
+                        </IconButton>
+                        <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+                            Student Dashboard
+                        </Typography>
+                        <IconButton
+                            color="inherit"
+                            onClick={handleMenuClick}
+                            sx={{ ml: 2 }}
+                        >
+                            <Person />
+                        </IconButton>
+                        <MuiMenu
+                            anchorEl={anchorEl}
+                            open={Boolean(anchorEl)}
+                            onClose={handleMenuClose}
+                        >
+                            <MuiMenuItem onClick={() => { handleMenuClose(); switchRole('writer'); }}>
+                                Switch to Writer
+                            </MuiMenuItem>
+                            <MuiMenuItem onClick={() => { handleMenuClose(); switchRole('editor'); }}>
+                                Switch to Editor
+                            </MuiMenuItem>
+                            <Divider />
+                            <MuiMenuItem onClick={() => { handleMenuClose(); handleLogout(); }}>
+                                <ListItemIcon>
+                                    <Logout fontSize="small" />
+                                </ListItemIcon>
+                                Logout
+                            </MuiMenuItem>
+                        </MuiMenu>
+                    </Toolbar>
+                </AppBar>
+                <Box
+                    component="nav"
+                    sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
+                >
+                    <Drawer
+                        variant="temporary"
+                        open={drawerOpen}
+                        onClose={() => setDrawerOpen(false)}
+                        ModalProps={{
+                            keepMounted: true,
+                        }}
+                        sx={{
+                            display: { xs: 'block', sm: 'none' },
+                            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+                        }}
+                    >
+                        {drawer}
+                    </Drawer>
+                    <Drawer
+                        variant="permanent"
+                        sx={{
+                            display: { xs: 'none', sm: 'block' },
+                            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+                        }}
+                        open
+                    >
+                        {drawer}
+                    </Drawer>
+                </Box>
+                <Box
+                    component="main"
+                    sx={{ flexGrow: 1, p: 3, width: { sm: `calc(100% - ${drawerWidth}px)` } }}
+                >
+                    <Toolbar />
+                    <Container maxWidth="lg">
+                        <Fade in={true} timeout={1000}>
+                            <Box>
+                                <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', color: '#1976d2' }}>
+                                    Student Dashboard
+                                </Typography>
+
+                                <Grid container spacing={3}>
+                                    <Grid item xs={12} lg={8}>
+                                        <Card sx={{ mb: 3 }}>
+                                            <CardContent>
+                                                <Typography variant="h6" gutterBottom color="primary">
+                                                    Published Articles ({publishedArticles.length})
+                                                </Typography>
+                                                {publishedArticles.length === 0 ? (
+                                                    <Typography color="text.secondary">No published articles available</Typography>
+                                                ) : (
+                                                    publishedArticles.map((article) => (
+                                                        <Card key={article.id} sx={{ mb: 3 }}>
+                                                            <CardContent>
+                                                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                                                    <Avatar sx={{ mr: 2, bgcolor: 'primary.main' }}>
+                                                                        {article.writer?.name?.charAt(0) || 'A'}
+                                                                    </Avatar>
+                                                                    <Box>
+                                                                        <Typography variant="subtitle1" fontWeight="bold">
+                                                                            {article.title}
+                                                                        </Typography>
+                                                                        <Typography variant="body2" color="text.secondary">
+                                                                            By {article.writer?.name}
+                                                                        </Typography>
+                                                                    </Box>
+                                                                </Box>
+                                                                <Chip
+                                                                    label={article.category?.name}
+                                                                    size="small"
+                                                                    sx={{ mr: 1, mb: 1 }}
+                                                                />
+                                                                <Chip
+                                                                    label="Published"
+                                                                    color="success"
+                                                                    size="small"
+                                                                    sx={{ mb: 1 }}
+                                                                />
+                                                                <Typography variant="body2" sx={{ mt: 2, mb: 2 }}>
+                                                                    {article.content?.substring(0, 200)}...
+                                                                </Typography>
+                                                                
+                                                                {article.comments?.length > 0 && (
+                                                                    <Box sx={{ mt: 2, mb: 2 }}>
+                                                                        <Typography variant="subtitle2" gutterBottom>
+                                                                            Comments ({article.comments.length})
+                                                                        </Typography>
+                                                                        {article.comments.slice(0, 2).map((comment) => (
+                                                                            <Box key={comment.id} sx={{ mb: 1, p: 1, bgcolor: 'grey.50', borderRadius: 1 }}>
+                                                                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                                    <Avatar sx={{ width: 24, height: 24, mr: 1, bgcolor: 'secondary.main' }}>
+                                                                                        {comment.student?.name?.charAt(0) || 'S'}
+                                                                                    </Avatar>
+                                                                                    <Typography variant="caption" fontWeight="bold">
+                                                                                        {comment.student?.name}
+                                                                                    </Typography>
+                                                                                </Box>
+                                                                                <Typography variant="body2">
+                                                                                    {comment.content}
+                                                                                </Typography>
+                                                                            </Box>
+                                                                        ))}
+                                                                        {article.comments.length > 2 && (
+                                                                            <Typography variant="caption" color="text.secondary">
+                                                                                +{article.comments.length - 2} more comments
+                                                                            </Typography>
+                                                                        )}
+                                                                    </Box>
+                                                                )}
+                                                            </CardContent>
+                                                            <CardActions>
+                                                                <Button
+                                                                    size="small"
+                                                                    startIcon={<Visibility />}
+                                                                    onClick={() => handleViewArticle(article)}
+                                                                    variant="contained"
+                                                                >
+                                                                    Read More
+                                                                </Button>
+                                                            </CardActions>
+                                                            <CardContent sx={{ pt: 0 }}>
+                                                                <TextField
+                                                                    fullWidth
+                                                                    multiline
+                                                                    rows={2}
+                                                                    label="Add a comment"
+                                                                    value={comments[article.id] || ''}
+                                                                    onChange={(e) => handleCommentChange(article.id, e.target.value)}
+                                                                    placeholder="Share your thoughts..."
+                                                                    size="small"
+                                                                />
+                                                                <Button
+                                                                    size="small"
+                                                                    onClick={() => handleComment(article.id)}
+                                                                    disabled={!comments[article.id]?.trim()}
+                                                                    sx={{ mt: 1 }}
+                                                                    startIcon={<Chat />}
+                                                                >
+                                                                    Post Comment
+                                                                </Button>
+                                                            </CardContent>
+                                                        </Card>
+                                                    ))
+                                                )}
+                                            </CardContent>
+                                        </Card>
+                                    </Grid>
+
+                                    <Grid item xs={12} lg={4}>
+                                        <Card sx={{ mb: 3 }}>
+                                            <CardContent>
+                                                <Typography variant="h6" gutterBottom color="secondary">
+                                                    My Comments ({myComments.length})
+                                                </Typography>
+                                                {myComments.length === 0 ? (
+                                                    <Typography color="text.secondary">You haven't commented yet</Typography>
+                                                ) : (
+                                                    myComments.map((comment) => (
+                                                        <Card key={comment.id} sx={{ mb: 2 }}>
+                                                            <CardContent sx={{ pb: 1 }}>
+                                                                <Typography variant="subtitle2" fontWeight="bold">
+                                                                    On: {comment.article?.title}
+                                                                </Typography>
+                                                                <Typography variant="body2" sx={{ mt: 1 }}>
+                                                                    {comment.content}
+                                                                </Typography>
+                                                                <Typography variant="caption" color="text.secondary">
+                                                                    {new Date(comment.created_at).toLocaleDateString()}
+                                                                </Typography>
+                                                            </CardContent>
+                                                            <CardActions>
+                                                                <Button
+                                                                    size="small"
+                                                                    onClick={() => handleViewArticle(comment.article)}
+                                                                    startIcon={<Visibility />}
+                                                                >
+                                                                    View Article
+                                                                </Button>
+                                                            </CardActions>
+                                                        </Card>
+                                                    ))
+                                                )}
+                                            </CardContent>
+                                        </Card>
+
+                                        <Card>
+                                            <CardContent>
+                                                <Typography variant="h6" gutterBottom color="info.main">
+                                                    Engagement Stats
+                                                </Typography>
+                                                <Box sx={{ textAlign: 'center' }}>
+                                                    <Typography variant="h3" color="primary" fontWeight="bold">
+                                                        {myComments.length}
+                                                    </Typography>
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        Comments Posted
+                                                    </Typography>
+                                                </Box>
+                                                <Box sx={{ textAlign: 'center', mt: 2 }}>
+                                                    <Typography variant="h3" color="success" fontWeight="bold">
+                                                        {publishedArticles.length}
+                                                    </Typography>
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        Articles Available
+                                                    </Typography>
+                                                </Box>
+                                            </CardContent>
+                                        </Card>
+                                    </Grid>
+                                </Grid>
+                            </Box>
+                        </Fade>
+                    </Container>
+                </Box>
+            </Box>
+        </>
+    );
+};
+
+export default StudentDashboard;
