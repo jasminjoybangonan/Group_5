@@ -17,6 +17,17 @@ class StudentController extends Controller
     {
         $publishedStatus = ArticleStatus::where('name', 'published')->first();
         
+        // Handle case where published status doesn't exist
+        if (!$publishedStatus) {
+            return Inertia::render('Student/Dashboard', [
+                'publishedArticles' => collect([]),
+                'myComments' => collect([]),
+                'categories' => Category::all(),
+                'selectedCategory' => $request->category_id,
+                'error' => 'Article statuses not properly configured. Please contact administrator.'
+            ]);
+        }
+        
         $query = Article::where('status_id', $publishedStatus->id)
             ->with(['writer', 'category', 'comments' => function($query) {
                 $query->with('student')->latest();
@@ -47,6 +58,16 @@ class StudentController extends Controller
     public function publishedArticles(Request $request)
     {
         $publishedStatus = ArticleStatus::where('name', 'published')->first();
+        
+        // Handle case where published status doesn't exist
+        if (!$publishedStatus) {
+            return Inertia::render('Student/PublishedArticles', [
+                'publishedArticles' => collect([]),
+                'categories' => Category::all(),
+                'selectedCategory' => $request->category_id,
+                'error' => 'Article statuses not properly configured. Please contact administrator.'
+            ]);
+        }
         
         $query = Article::where('status_id', $publishedStatus->id)
             ->with(['writer', 'category', 'comments' => function($query) {

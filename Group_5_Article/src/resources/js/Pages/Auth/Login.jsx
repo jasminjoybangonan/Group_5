@@ -37,32 +37,39 @@ export default function Login({ status, canResetPassword }) {
     const submit = (e) => {
         e.preventDefault();
         
-        // Clear any existing session issues
-        fetch('/csrf-cookie').then(() => {
-            post(route('login'), {
-                onFinish: () => reset('password'),
-                onError: (errors) => {
-                    console.error('Login errors:', errors);
+        post(route('login'), {
+            onFinish: () => reset('password'),
+            onError: (errors) => {
+                console.error('Login errors:', errors);
+                // Add more specific error handling
+                if (errors.email) {
+                    console.error('Email error:', errors.email);
                 }
-            });
+                if (errors.password) {
+                    console.error('Password error:', errors.password);
+                }
+            },
+            onSuccess: () => {
+                console.log('Login successful');
+            }
         });
     };
 
     const quickLogin = (email) => {
-        // Clear any existing session issues first
-        fetch('/csrf-cookie').then(() => {
-            // Set form data
-            setData('email', email);
-            setData('password', 'password');
-            setData('remember', false);
-            
-            // Submit form
-            post(route('login'), {
-                onFinish: () => reset('password'),
-                onError: (errors) => {
-                    console.error('Login errors:', errors);
-                }
-            });
+        // Set form data
+        setData('email', email);
+        setData('password', 'password');
+        setData('remember', false);
+        
+        // Submit form
+        post(route('login'), {
+            onFinish: () => reset('password'),
+            onError: (errors) => {
+                console.error('Login errors:', errors);
+            },
+            onSuccess: () => {
+                console.log('Quick login successful');
+            }
         });
     };
 
