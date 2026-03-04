@@ -104,14 +104,20 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                                                     variant="contained"
                                                     size="large"
                                                     component={Link}
-                                                    href="/writer/dashboard"
+                                                    href={auth.user.roles?.includes('student') ? '/student/dashboard' : 
+                                                         auth.user.roles?.includes('editor') ? '/editor/dashboard' : 
+                                                         auth.user.roles?.includes('admin') ? '/writer/dashboard' : 
+                                                         '/writer/dashboard'}
                                                     sx={{
                                                         bgcolor: 'white',
                                                         color: '#667eea',
                                                         '&:hover': { bgcolor: 'grey.100' }
                                                     }}
                                                 >
-                                                    Go to Dashboard
+                                                    {auth.user.roles?.includes('student') ? 'Go to Student Dashboard' : 
+                                                     auth.user.roles?.includes('editor') ? 'Go to Editor Dashboard' : 
+                                                     auth.user.roles?.includes('admin') ? 'Go to Admin Dashboard' : 
+                                                     'Go to Writer Dashboard'}
                                                 </Button>
                                             ) : (
                                                 <>

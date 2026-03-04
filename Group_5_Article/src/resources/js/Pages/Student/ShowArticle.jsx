@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Head, router } from '@inertiajs/react';
 import {
     Container,
@@ -29,19 +29,35 @@ import {
 
 const ShowArticle = ({ article }) => {
     const [newComment, setNewComment] = useState('');
+    const [comments, setComments] = useState(article.comments || []);
+
+    // Sync comments when article changes
+    useEffect(() => {
+        setComments(article.comments || []);
+    }, [article.comments]);
 
     const handleComment = () => {
         if (newComment.trim()) {
             router.post(`/student/articles/${article.id}/comment`, {
                 content: newComment
             }, {
-                onSuccess: () => {
+                onSuccess: (page) => {
                     setNewComment('');
-                    window.location.reload();
+                    // Update comments with the new data from the page
+                    if (page.props.comments) {
+                        setComments(page.props.comments);
+                    }
+                },
+                onError: (errors) => {
+                    alert('Error posting comment: ' + JSON.stringify(errors));
                 }
             });
         }
     };
+
+    useEffect(() => {
+        setComments(article.comments || []);
+    }, [article.comments]);
 
     return (
         <>

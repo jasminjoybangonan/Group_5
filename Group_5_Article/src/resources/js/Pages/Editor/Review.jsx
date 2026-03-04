@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useMemo, useCallback } from 'react';
 import { Head, router } from '@inertiajs/react';
 import {
     Container,
@@ -32,10 +32,25 @@ import {
     RateReview,
     Schedule
 } from '@mui/icons-material';
+import JoditEditor from 'jodit-react';
 
 const Review = ({ article }) => {
     const [revisionDialog, setRevisionDialog] = useState(false);
     const [revisionComments, setRevisionComments] = useState('');
+    const [content, setContent] = useState(article.content || '');
+    const editor = useRef(null);
+
+    const config = useMemo(
+        () => ({
+            readonly: true,
+            placeholder: 'Article content...',
+            toolbar: false,
+            showCharsCounter: false,
+            showWordsCounter: false,
+            showXPathInStatusbar: false,
+        }),
+        []
+    );
 
     const handlePublish = () => {
         router.post(`/editor/articles/${article.id}/publish`, {}, {
@@ -106,10 +121,16 @@ const Review = ({ article }) => {
                                 <Typography variant="h6" gutterBottom>
                                     Article Content
                                 </Typography>
-                                <Paper sx={{ p: 3, bgcolor: 'grey.50' }}>
-                                    <Typography variant="body1" sx={{ lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
-                                        {article.content}
-                                    </Typography>
+                                <Paper sx={{ p: 1, bgcolor: 'grey.50', border: 1, borderColor: 'grey.300' }}>
+                                    <JoditEditor
+                                        ref={editor}
+                                        value={content}
+                                        config={config}
+                                        onBlur={useCallback((newContent) => {
+                                            setContent(newContent);
+                                        }, [])}
+                                        onChange={useCallback(() => {}, [])}
+                                    />
                                 </Paper>
                             </Box>
 

@@ -28,7 +28,7 @@ Route::get('/', function () {
 });
 
 // Writer Routes
-Route::middleware(['auth', 'role:writer'])->prefix('writer')->name('writer.')->group(function () {
+Route::middleware(['web', 'auth', 'role:writer'])->prefix('writer')->name('writer.')->group(function () {
     Route::get('/dashboard', [WriterController::class, 'dashboard'])->name('dashboard');
     Route::post('/articles', [WriterController::class, 'store'])->name('articles.store');
     Route::put('/articles/{article}', [WriterController::class, 'update'])->name('articles.update');
@@ -37,7 +37,7 @@ Route::middleware(['auth', 'role:writer'])->prefix('writer')->name('writer.')->g
 });
 
 // Editor Routes
-Route::middleware(['auth', 'role:editor'])->prefix('editor')->name('editor.')->group(function () {
+Route::middleware(['web', 'auth', 'role:editor'])->prefix('editor')->name('editor.')->group(function () {
     Route::get('/dashboard', [EditorController::class, 'dashboard'])->name('dashboard');
     Route::get('/articles/{article}/review', [EditorController::class, 'review'])->name('articles.review');
     Route::post('/articles/{article}/revision', [EditorController::class, 'requestRevision'])->name('articles.revision');
@@ -45,10 +45,13 @@ Route::middleware(['auth', 'role:editor'])->prefix('editor')->name('editor.')->g
 });
 
 // Student Routes
-Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')->group(function () {
+Route::middleware(['web', 'auth', 'role:student'])->prefix('student')->name('student.')->group(function () {
     Route::get('/dashboard', [StudentController::class, 'dashboard'])->name('dashboard');
+    Route::get('/published-articles', [StudentController::class, 'publishedArticles'])->name('published.articles');
+    Route::get('/my-comments', [StudentController::class, 'myComments'])->name('my.comments');
     Route::get('/articles/{article}', [StudentController::class, 'show'])->name('articles.show');
     Route::post('/articles/{article}/comment', [StudentController::class, 'comment'])->name('articles.comment');
+    Route::delete('/comments/{comment}', [StudentController::class, 'deleteComment'])->name('comments.delete');
 });
 
 Route::middleware('auth')->group(function () {

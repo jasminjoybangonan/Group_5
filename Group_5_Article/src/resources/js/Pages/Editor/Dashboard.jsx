@@ -55,7 +55,7 @@ const EditorDashboard = ({ pending, needsRevision, published }) => {
     const [anchorEl, setAnchorEl] = useState(null);
 
     const handleRequestRevision = () => {
-        if (selectedArticle) {
+        if (selectedArticle && revisionComments.trim()) {
             router.post(`/editor/articles/${selectedArticle.id}/revision`, {
                 comments: revisionComments
             }, {
@@ -63,15 +63,28 @@ const EditorDashboard = ({ pending, needsRevision, published }) => {
                     setRevisionDialog(false);
                     setRevisionComments('');
                     setSelectedArticle(null);
+                    window.location.reload();
+                },
+                onError: (errors) => {
+                    console.error('Revision request failed:', errors);
+                    alert('Failed to send revision request. Please try again.');
                 }
             });
+        } else {
+            alert('Please provide revision comments before submitting.');
         }
     };
 
     const handlePublish = (article) => {
-        router.post(`/editor/articles/${article.id}/publish`, {}, {
-            onSuccess: () => window.location.reload()
-        });
+        if (window.confirm(`Are you sure you want to publish "${article.title}"?`)) {
+            router.post(`/editor/articles/${article.id}/publish`, {}, {
+                onSuccess: () => window.location.reload(),
+                onError: (errors) => {
+                    console.error('Publish failed:', errors);
+                    alert('Failed to publish article. Please try again.');
+                }
+            });
+        }
     };
 
     const handleReview = (article) => {
@@ -421,7 +434,12 @@ const EditorDashboard = ({ pending, needsRevision, published }) => {
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setRevisionDialog(false)}>Cancel</Button>
-                    <Button onClick={handleRequestRevision} variant="contained" color="error">
+                    <Button 
+                        onClick={handleRequestRevision} 
+                        variant="contained" 
+                        color="error"
+                        disabled={!revisionComments.trim()}
+                    >
                         Send Revision Request
                     </Button>
                 </DialogActions>

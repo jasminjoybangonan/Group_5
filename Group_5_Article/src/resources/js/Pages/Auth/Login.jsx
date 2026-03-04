@@ -36,16 +36,41 @@ export default function Login({ status, canResetPassword }) {
 
     const submit = (e) => {
         e.preventDefault();
-        post(route('login'), {
-            onFinish: () => reset('password'),
+        
+        // Clear any existing session issues
+        fetch('/csrf-cookie').then(() => {
+            post(route('login'), {
+                onFinish: () => reset('password'),
+                onError: (errors) => {
+                    console.error('Login errors:', errors);
+                }
+            });
+        });
+    };
+
+    const quickLogin = (email) => {
+        // Clear any existing session issues first
+        fetch('/csrf-cookie').then(() => {
+            // Set form data
+            setData('email', email);
+            setData('password', 'password');
+            setData('remember', false);
+            
+            // Submit form
+            post(route('login'), {
+                onFinish: () => reset('password'),
+                onError: (errors) => {
+                    console.error('Login errors:', errors);
+                }
+            });
         });
     };
 
     const demoAccounts = [
-        { role: 'Writer', email: 'writer@example.com', icon: <Edit /> },
-        { role: 'Editor', email: 'editor@example.com', icon: <Visibility /> },
-        { role: 'Student', email: 'student@example.com', icon: <Person /> },
-        { role: 'Admin', email: 'admin@example.com', icon: <LockOutlined /> }
+        { role: 'Writer', email: 'writer@example.com', icon: <Edit />, note: 'Full access to write articles' },
+        { role: 'Editor', email: 'editor@example.com', icon: <Visibility />, note: 'Can review and publish articles' },
+        { role: 'Student', email: 'student@example.com', icon: <Person />, note: 'Can read and comment on articles' },
+        { role: 'Admin', email: 'admin@example.com', icon: <LockOutlined />, note: 'Full system access' }
     ];
 
     return (
@@ -84,23 +109,40 @@ export default function Login({ status, canResetPassword }) {
                                             Demo Accounts (Password: password)
                                         </Typography>
                                         {demoAccounts.map((account, index) => (
-                                            <Card key={account.role} sx={{ 
-                                                mb: 2, 
-                                                bgcolor: 'rgba(255, 255, 255, 0.1)', 
-                                                backdropFilter: 'blur(10px)',
-                                                border: '1px solid rgba(255, 255, 255, 0.2)'
-                                            }}>
+                                            <Card 
+                                                key={account.role} 
+                                                sx={{ 
+                                                    mb: 2, 
+                                                    bgcolor: 'rgba(255, 255, 255, 0.1)', 
+                                                    backdropFilter: 'blur(10px)',
+                                                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.3s ease',
+                                                    '&:hover': {
+                                                        bgcolor: 'rgba(255, 255, 255, 0.2)',
+                                                        transform: 'translateY(-2px)',
+                                                        boxShadow: '0 8px 16px rgba(0,0,0,0.2)'
+                                                    }
+                                                }}
+                                                onClick={() => quickLogin(account.email)}
+                                            >
                                                 <CardContent sx={{ py: 2 }}>
                                                     <Box sx={{ display: 'flex', alignItems: 'center', color: 'white' }}>
                                                         <Avatar sx={{ mr: 2, bgcolor: 'rgba(255, 255, 255, 0.2)' }}>
                                                             {account.icon}
                                                         </Avatar>
-                                                        <Box>
+                                                        <Box sx={{ flex: 1 }}>
                                                             <Typography variant="subtitle2" fontWeight="bold">
                                                                 {account.role}
                                                             </Typography>
                                                             <Typography variant="body2" sx={{ opacity: 0.8 }}>
                                                                 {account.email}
+                                                            </Typography>
+                                                            <Typography variant="caption" sx={{ opacity: 0.6 }}>
+                                                                {account.note}
+                                                            </Typography>
+                                                            <Typography variant="caption" sx={{ opacity: 0.8, mt: 0.5 }}>
+                                                                Click to login →
                                                             </Typography>
                                                         </Box>
                                                     </Box>

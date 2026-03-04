@@ -9,11 +9,8 @@ import {
     Button,
     Card,
     CardContent,
-    CardActions,
-    TextField,
     Alert,
     Fade,
-    Slide,
     AppBar,
     Toolbar,
     Drawer,
@@ -26,7 +23,8 @@ import {
     Avatar,
     Chip,
     Menu as MuiMenu,
-    MenuItem as MuiMenuItem
+    MenuItem as MuiMenuItem,
+    Stack
 } from '@mui/material';
 import {
     Article,
@@ -41,33 +39,12 @@ import {
 
 const drawerWidth = 240;
 
-const StudentDashboard = ({ publishedArticles, myComments }) => {
+const StudentDashboard = ({ publishedArticles, myComments, categories, selectedCategory }) => {
     const [drawerOpen, setDrawerOpen] = useState(false);
-    const [comments, setComments] = useState({});
-    const [selectedArticle, setSelectedArticle] = useState(null);
     const [anchorEl, setAnchorEl] = useState(null);
 
-    const handleComment = (articleId) => {
-        const content = comments[articleId];
-        if (content && content.trim()) {
-            router.post(`/student/articles/${articleId}/comment`, {
-                content: content
-            }, {
-                onSuccess: () => {
-                    setComments(prev => ({ ...prev, [articleId]: '' }));
-                    window.location.reload();
-                }
-            });
-        }
-    };
-
-    const handleCommentChange = (articleId, value) => {
-        setComments(prev => ({ ...prev, [articleId]: value }));
-    };
-
     const handleViewArticle = (article) => {
-        setSelectedArticle(article);
-        router.get(`/student/articles/${article.id}`);
+        router.visit(`/student/articles/${article.id}`);
     };
 
     const handleLogout = () => {
@@ -209,144 +186,131 @@ const StudentDashboard = ({ publishedArticles, myComments }) => {
 
                                 <Grid container spacing={3}>
                                     <Grid item xs={12} lg={8}>
-                                        <Card sx={{ mb: 3 }}>
-                                            <CardContent>
-                                                <Typography variant="h6" gutterBottom color="primary">
-                                                    Published Articles ({publishedArticles.length})
-                                                </Typography>
-                                                {publishedArticles.length === 0 ? (
-                                                    <Typography color="text.secondary">No published articles available</Typography>
-                                                ) : (
-                                                    publishedArticles.map((article) => (
-                                                        <Card key={article.id} sx={{ mb: 3 }}>
-                                                            <CardContent>
-                                                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                                                    <Avatar sx={{ mr: 2, bgcolor: 'primary.main' }}>
-                                                                        {article.writer?.name?.charAt(0) || 'A'}
-                                                                    </Avatar>
-                                                                    <Box>
-                                                                        <Typography variant="subtitle1" fontWeight="bold">
-                                                                            {article.title}
-                                                                        </Typography>
-                                                                        <Typography variant="body2" color="text.secondary">
-                                                                            By {article.writer?.name}
-                                                                        </Typography>
-                                                                    </Box>
-                                                                </Box>
-                                                                <Chip
-                                                                    label={article.category?.name}
-                                                                    size="small"
-                                                                    sx={{ mr: 1, mb: 1 }}
-                                                                />
-                                                                <Chip
-                                                                    label="Published"
-                                                                    color="success"
-                                                                    size="small"
-                                                                    sx={{ mb: 1 }}
-                                                                />
-                                                                <Typography variant="body2" sx={{ mt: 2, mb: 2 }}>
-                                                                    {article.content?.substring(0, 200)}...
+                                        <Box sx={{ mb: 6 }}>
+                                            <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', color: '#1976d2', mb: 3 }}>
+                                                Published Articles
+                                            </Typography>
+
+                                            {!publishedArticles || publishedArticles.length === 0 ? (
+                                                <Alert severity="info" sx={{ mb: 2 }}>
+                                                    <Typography color="text.secondary">
+                                                        No published articles available yet. Check back later for new content!
+                                                    </Typography>
+                                                </Alert>
+                                            ) : (
+                                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
+                                                    {publishedArticles.map((article) => (
+                                                        <Card key={article.id} sx={{ 
+                                                            minWidth: 280, 
+                                                            maxWidth: 320,
+                                                            flex: '1 1 calc(33.333% - 16px)',
+                                                            mb: 2,
+                                                            transition: 'transform 0.2s',
+                                                            '&:hover': { 
+                                                                transform: 'translateY(-4px)',
+                                                                boxShadow: 4
+                                                            }
+                                                        }}>
+                                                            <CardContent sx={{ p: 2 }}>
+                                                                <Typography variant="h6" gutterBottom sx={{ 
+                                                                    fontWeight: 'bold', 
+                                                                    fontSize: '1rem',
+                                                                    lineHeight: 1.2,
+                                                                    mb: 1,
+                                                                    color: '#1976d2'
+                                                                }}>
+                                                                    {article.title}
                                                                 </Typography>
-                                                                
-                                                                {article.comments?.length > 0 && (
-                                                                    <Box sx={{ mt: 2, mb: 2 }}>
-                                                                        <Typography variant="subtitle2" gutterBottom>
-                                                                            Comments ({article.comments.length})
-                                                                        </Typography>
-                                                                        {article.comments.slice(0, 2).map((comment) => (
-                                                                            <Box key={comment.id} sx={{ mb: 1, p: 1, bgcolor: 'grey.50', borderRadius: 1 }}>
-                                                                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                                                                    <Avatar sx={{ width: 24, height: 24, mr: 1, bgcolor: 'secondary.main' }}>
-                                                                                        {comment.student?.name?.charAt(0) || 'S'}
-                                                                                    </Avatar>
-                                                                                    <Typography variant="caption" fontWeight="bold">
-                                                                                        {comment.student?.name}
-                                                                                    </Typography>
-                                                                                </Box>
-                                                                                <Typography variant="body2">
-                                                                                    {comment.content}
-                                                                                </Typography>
-                                                                            </Box>
-                                                                        ))}
-                                                                        {article.comments.length > 2 && (
-                                                                            <Typography variant="caption" color="text.secondary">
-                                                                                +{article.comments.length - 2} more comments
-                                                                            </Typography>
-                                                                        )}
-                                                                    </Box>
-                                                                )}
-                                                            </CardContent>
-                                                            <CardActions>
+                                                                <Typography variant="body2" color="text.secondary" sx={{ 
+                                                                    fontSize: '0.875rem',
+                                                                    lineHeight: 1.4,
+                                                                    mb: 2,
+                                                                    display: '-webkit-box',
+                                                                    WebkitLineClamp: 3,
+                                                                    WebkitBoxOrient: 'vertical',
+                                                                    overflow: 'hidden'
+                                                                }}>
+                                                                    {article.content?.substring(0, 150)}...
+                                                                </Typography>
+                                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                                                                    <Chip
+                                                                        label={article.category?.name}
+                                                                        size="small"
+                                                                        color="primary"
+                                                                        variant="outlined"
+                                                                    />
+                                                                    <Chip
+                                                                        label={`By ${article.writer?.name || 'Unknown'}`}
+                                                                        size="small"
+                                                                        color="secondary"
+                                                                        variant="outlined"
+                                                                    />
+                                                                </Box>
                                                                 <Button
                                                                     size="small"
+                                                                    variant="contained"
                                                                     startIcon={<Visibility />}
                                                                     onClick={() => handleViewArticle(article)}
-                                                                    variant="contained"
+                                                                    sx={{ 
+                                                                        borderRadius: 2,
+                                                                        textTransform: 'none',
+                                                                        fontWeight: 'medium'
+                                                                    }}
                                                                 >
-                                                                    Read More
-                                                                </Button>
-                                                            </CardActions>
-                                                            <CardContent sx={{ pt: 0 }}>
-                                                                <TextField
-                                                                    fullWidth
-                                                                    multiline
-                                                                    rows={2}
-                                                                    label="Add a comment"
-                                                                    value={comments[article.id] || ''}
-                                                                    onChange={(e) => handleCommentChange(article.id, e.target.value)}
-                                                                    placeholder="Share your thoughts..."
-                                                                    size="small"
-                                                                />
-                                                                <Button
-                                                                    size="small"
-                                                                    onClick={() => handleComment(article.id)}
-                                                                    disabled={!comments[article.id]?.trim()}
-                                                                    sx={{ mt: 1 }}
-                                                                    startIcon={<Chat />}
-                                                                >
-                                                                    Post Comment
+                                                                    Read Article
                                                                 </Button>
                                                             </CardContent>
                                                         </Card>
-                                                    ))
-                                                )}
-                                            </CardContent>
-                                        </Card>
+                                                    ))}
+                                                </Box>
+                                            )}
+                                        </Box>
                                     </Grid>
 
                                     <Grid item xs={12} lg={4}>
                                         <Card sx={{ mb: 3 }}>
                                             <CardContent>
-                                                <Typography variant="h6" gutterBottom color="secondary">
-                                                    My Comments ({myComments.length})
-                                                </Typography>
-                                                {myComments.length === 0 ? (
+                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                                    <Typography variant="h6" color="secondary">
+                                                        My Comments ({myComments?.length || 0})
+                                                    </Typography>
+                                                    <Button 
+                                                        variant="outlined" 
+                                                        size="small"
+                                                        onClick={() => router.visit('/student/my-comments')}
+                                                        startIcon={<Comment />}
+                                                    >
+                                                        View All
+                                                    </Button>
+                                                </Box>
+                                                {myComments?.length === 0 ? (
                                                     <Typography color="text.secondary">You haven't commented yet</Typography>
                                                 ) : (
-                                                    myComments.map((comment) => (
-                                                        <Card key={comment.id} sx={{ mb: 2 }}>
-                                                            <CardContent sx={{ pb: 1 }}>
-                                                                <Typography variant="subtitle2" fontWeight="bold">
+                                                    <Stack spacing={2}>
+                                                        {myComments.slice(0, 3).map((comment) => (
+                                                            <Card key={comment.id} sx={{ p: 2, bgcolor: 'grey.50' }}>
+                                                                <Typography variant="subtitle2" fontWeight="bold" color="primary">
                                                                     On: {comment.article?.title}
                                                                 </Typography>
                                                                 <Typography variant="body2" sx={{ mt: 1 }}>
-                                                                    {comment.content}
+                                                                    {comment.content?.substring(0, 100)}...
                                                                 </Typography>
                                                                 <Typography variant="caption" color="text.secondary">
                                                                     {new Date(comment.created_at).toLocaleDateString()}
                                                                 </Typography>
-                                                            </CardContent>
-                                                            <CardActions>
-                                                                <Button
-                                                                    size="small"
-                                                                    onClick={() => handleViewArticle(comment.article)}
-                                                                    startIcon={<Visibility />}
-                                                                >
-                                                                    View Article
-                                                                </Button>
-                                                            </CardActions>
-                                                        </Card>
-                                                    ))
+                                                            </Card>
+                                                        ))}
+                                                        {myComments.length > 3 && (
+                                                            <Button 
+                                                                variant="text" 
+                                                                size="small"
+                                                                onClick={() => router.visit('/student/my-comments')}
+                                                                sx={{ alignSelf: 'center' }}
+                                                            >
+                                                                View {myComments.length - 3} more comments
+                                                            </Button>
+                                                        )}
+                                                    </Stack>
                                                 )}
                                             </CardContent>
                                         </Card>
@@ -358,7 +322,7 @@ const StudentDashboard = ({ publishedArticles, myComments }) => {
                                                 </Typography>
                                                 <Box sx={{ textAlign: 'center' }}>
                                                     <Typography variant="h3" color="primary" fontWeight="bold">
-                                                        {myComments.length}
+                                                        {myComments?.length || 0}
                                                     </Typography>
                                                     <Typography variant="body2" color="text.secondary">
                                                         Comments Posted
@@ -366,7 +330,7 @@ const StudentDashboard = ({ publishedArticles, myComments }) => {
                                                 </Box>
                                                 <Box sx={{ textAlign: 'center', mt: 2 }}>
                                                     <Typography variant="h3" color="success" fontWeight="bold">
-                                                        {publishedArticles.length}
+                                                        {publishedArticles?.length || 0}
                                                     </Typography>
                                                     <Typography variant="body2" color="text.secondary">
                                                         Articles Available
