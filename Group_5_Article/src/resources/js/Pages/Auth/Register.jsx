@@ -42,8 +42,15 @@ export default function Register() {
 
     const submit = (e) => {
         e.preventDefault();
+        
         post(route('register'), {
             onFinish: () => reset('password', 'password_confirmation'),
+            onError: (errors) => {
+                console.error('Registration errors:', errors);
+            },
+            onSuccess: () => {
+                console.log('Registration successful');
+            }
         });
     };
 

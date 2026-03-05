@@ -100,25 +100,57 @@ export default function Welcome({ auth, laravelVersion, phpVersion }) {
                                         </Typography>
                                         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                                             {auth.user ? (
-                                                <Button
-                                                    variant="contained"
-                                                    size="large"
-                                                    component={Link}
-                                                    href={auth.user.roles?.includes('student') ? '/student/dashboard' : 
-                                                         auth.user.roles?.includes('editor') ? '/editor/dashboard' : 
-                                                         auth.user.roles?.includes('admin') ? '/writer/dashboard' : 
-                                                         '/writer/dashboard'}
-                                                    sx={{
-                                                        bgcolor: 'white',
-                                                        color: '#667eea',
-                                                        '&:hover': { bgcolor: 'grey.100' }
-                                                    }}
-                                                >
-                                                    {auth.user.roles?.includes('student') ? 'Go to Student Dashboard' : 
-                                                     auth.user.roles?.includes('editor') ? 'Go to Editor Dashboard' : 
-                                                     auth.user.roles?.includes('admin') ? 'Go to Admin Dashboard' : 
-                                                     'Go to Writer Dashboard'}
-                                                </Button>
+                                                <>
+                                                    {(() => {
+                                                        const userRoles = auth.user.roles || [];
+                                                        console.log('User roles:', userRoles);
+                                                        console.log('Auth user:', auth.user);
+                                                        
+                                                        let dashboardUrl = '/writer/dashboard';
+                                                        let dashboardText = 'Go to Writer Dashboard';
+                                                        
+                                                        if (userRoles.includes('student')) {
+                                                            dashboardUrl = '/student/dashboard';
+                                                            dashboardText = 'Go to Student Dashboard';
+                                                        } else if (userRoles.includes('editor')) {
+                                                            dashboardUrl = '/editor/dashboard';
+                                                            dashboardText = 'Go to Editor Dashboard';
+                                                        } else if (userRoles.includes('admin')) {
+                                                            dashboardUrl = '/writer/dashboard';
+                                                            dashboardText = 'Go to Admin Dashboard';
+                                                        }
+                                                        
+                                                        return (
+                                                            <>
+                                                                <Button
+                                                                    variant="contained"
+                                                                    size="large"
+                                                                    component={Link}
+                                                                    href="/writer-dashboard-test"
+                                                                    sx={{
+                                                                        bgcolor: 'white',
+                                                                        color: '#667eea',
+                                                                        '&:hover': { bgcolor: 'grey.100' }
+                                                                    }}
+                                                                >
+                                                                    Dashboard
+                                                                </Button>
+                                                                <Button
+                                                                    variant="text"
+                                                                    size="small"
+                                                                    component={Link}
+                                                                    href="/debug-roles"
+                                                                    sx={{
+                                                                        color: 'white',
+                                                                        textDecoration: 'underline'
+                                                                    }}
+                                                                >
+                                                                    Debug Roles
+                                                                </Button>
+                                                            </>
+                                                        );
+                                                    })()}
+                                                </>
                                             ) : (
                                                 <>
                                                     <Button

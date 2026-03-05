@@ -19,6 +19,24 @@ Route::get('/clear-cache', function () {
     return 'Cache cleared!';
 });
 
+// Debug route to check user roles
+Route::get('/debug-roles', function () {
+    $user = \Illuminate\Support\Facades\Auth::user();
+    if ($user) {
+        return response()->json([
+            'user_id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'roles' => $user->roles->pluck('name'),
+            'has_writer_role' => $user->hasRole('writer'),
+            'has_editor_role' => $user->hasRole('editor'),
+            'has_student_role' => $user->hasRole('student'),
+            'has_admin_role' => $user->hasRole('admin'),
+        ]);
+    }
+    return response()->json(['message' => 'Not authenticated']);
+})->middleware('auth');
+
 Route::get('/', function () {
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
@@ -38,6 +56,9 @@ Route::middleware(['web', 'auth', 'role:writer'])->prefix('writer')->name('write
     Route::post('/articles/{article}/submit', [WriterController::class, 'submit'])->name('articles.submit');
     Route::put('/articles/{article}/revise', [WriterController::class, 'revise'])->name('articles.revise');
 });
+
+// Fallback writer route without role middleware for testing
+Route::get('/writer-dashboard-test', [WriterController::class, 'dashboard'])->name('writer.dashboard.test')->middleware('auth');
 
 // Editor Routes
 Route::middleware(['web', 'auth', 'role:editor'])->prefix('editor')->name('editor.')->group(function () {
