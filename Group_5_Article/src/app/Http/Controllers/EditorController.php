@@ -68,7 +68,7 @@ class EditorController extends Controller
         // Notify the writer
         $article->writer->notify(new RevisionRequestedNotification($article, $revision));
 
-        return redirect()->route('editor.dashboard')->with('success', 'Revision request sent!');
+        return back()->with('success', 'Revision request sent!');
     }
 
     public function publish(Article $article)
@@ -83,6 +83,6 @@ class EditorController extends Controller
         // Notify the writer
         $article->writer->notify(new ArticlePublishedNotification($article));
 
-        return redirect()->route('editor.dashboard')->with('success', 'Article published!');
+        return back()->with('success', 'Article published!');
     }
 }

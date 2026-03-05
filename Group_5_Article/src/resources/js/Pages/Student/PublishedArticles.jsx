@@ -105,11 +105,19 @@ const PublishedArticles = ({ publishedArticles, categories, selectedCategory }) 
     };
 
     const handleLogout = () => {
-        router.post('/logout');
+        router.post('/logout', {}, {
+            onFinish: () => {
+                handleMenuClose();
+            }
+        });
     };
 
     const switchRole = (role) => {
-        router.post(`/switch-role/${role}`);
+        router.post(`/switch-role/${role}`, {}, {
+            onFinish: () => {
+                handleMenuClose();
+            }
+        });
     };
 
     const handleMenuClick = (event) => {
@@ -194,14 +202,14 @@ const PublishedArticles = ({ publishedArticles, categories, selectedCategory }) 
                             open={Boolean(anchorEl)}
                             onClose={handleMenuClose}
                         >
-                            <MuiMenuItem onClick={() => { handleMenuClose(); switchRole('writer'); }}>
+                            <MuiMenuItem onClick={() => { switchRole('writer'); }}>
                                 Switch to Writer
                             </MuiMenuItem>
-                            <MuiMenuItem onClick={() => { handleMenuClose(); switchRole('editor'); }}>
+                            <MuiMenuItem onClick={() => { switchRole('editor'); }}>
                                 Switch to Editor
                             </MuiMenuItem>
                             <Divider />
-                            <MuiMenuItem onClick={() => { handleMenuClose(); handleLogout(); }}>
+                            <MuiMenuItem onClick={handleLogout}>
                                 <ListItemIcon>
                                     <Logout fontSize="small" />
                                 </ListItemIcon>
