@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     Container,
     Typography,
@@ -40,13 +40,16 @@ import {
     Menu,
     Dashboard,
     Logout,
-    Person
+    Person,
+    Delete
 } from '@mui/icons-material';
 import JoditEditorComponent from '@/Components/JoditEditor';
 
 const drawerWidth = 240;
 
 const WriterDashboard = ({ drafts, submitted, needsRevision, published, categories }) => {
+    const { flash } = usePage().props;
+
     const [formData, setFormData] = useState({
         title: '',
         content: '',
@@ -59,6 +62,7 @@ const WriterDashboard = ({ drafts, submitted, needsRevision, published, categori
     const handleSubmit = (e) => {
         e.preventDefault();
         router.post('/writer/articles', formData, {
+            preserveScroll: true,
             onSuccess: () => {
                 setFormData({ title: '', content: '', category_id: '' });
                 setShowCreateForm(false);
@@ -100,13 +104,23 @@ const WriterDashboard = ({ drafts, submitted, needsRevision, published, categori
 
     const handleSubmitArticle = (articleId) => {
         router.post(`/writer/articles/${articleId}/submit`, {}, {
-            onSuccess: () => window.location.reload()
+            preserveScroll: true
         });
     };
 
-    const handleEditArticle = (articleId) => {
-        router.put(`/writer/articles/${articleId}`, formData, {
-            onSuccess: () => window.location.reload()
+    const handleOpenArticle = (articleId) => {
+        router.get(`/writer/articles/${articleId}/edit`);
+    };
+
+    const handleViewPublished = (articleId) => {
+        router.get(`/student/articles/${articleId}`);
+    };
+
+    const handleDeleteArticle = (article) => {
+        if (!window.confirm(`Delete "${article.title}"? This cannot be undone.`)) return;
+
+        router.delete(`/writer/articles/${article.id}`, {
+            preserveScroll: true
         });
     };
 
@@ -151,6 +165,13 @@ const WriterDashboard = ({ drafts, submitted, needsRevision, published, categori
         </div>
     );
 
+    const stats = [
+        { label: 'Drafts', value: drafts?.length || 0, color: 'primary.main' },
+        { label: 'Submitted', value: submitted?.length || 0, color: 'warning.main' },
+        { label: 'Needs Revision', value: needsRevision?.length || 0, color: 'error.main' },
+        { label: 'Published', value: published?.length || 0, color: 'success.main' }
+    ];
+
     return (
         <>
             <Head title="Writer Dashboard" />
@@ -184,6 +205,10 @@ const WriterDashboard = ({ drafts, submitted, needsRevision, published, categori
                             open={Boolean(anchorEl)}
                             onClose={handleMenuClose}
                         >
+                            <MuiMenuItem onClick={() => { handleMenuClose(); router.get('/profile'); }}>
+                                Profile
+                            </MuiMenuItem>
+                            <Divider />
                             <MuiMenuItem onClick={() => { switchRole('editor'); }}>
                                 Switch to Editor
                             </MuiMenuItem>
@@ -240,6 +265,27 @@ const WriterDashboard = ({ drafts, submitted, needsRevision, published, categori
                                 <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', color: '#1976d2' }}>
                                     Welcome to Your Writer Dashboard
                                 </Typography>
+
+                                {(flash?.success || flash?.error) && (
+                                    <Alert severity={flash?.success ? 'success' : 'error'} sx={{ mb: 3 }}>
+                                        {flash?.success || flash?.error}
+                                    </Alert>
+                                )}
+
+                                <Grid container spacing={2} sx={{ mb: 3 }}>
+                                    {stats.map((item) => (
+                                        <Grid item xs={12} sm={6} md={3} key={item.label}>
+                                            <Paper sx={{ p: 2 }}>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    {item.label}
+                                                </Typography>
+                                                <Typography variant="h4" sx={{ fontWeight: 'bold', color: item.color }}>
+                                                    {item.value}
+                                                </Typography>
+                                            </Paper>
+                                        </Grid>
+                                    ))}
+                                </Grid>
 
                                 {showCreateForm && (
                                     <Slide direction="down" in={showCreateForm}>
@@ -333,8 +379,20 @@ const WriterDashboard = ({ drafts, submitted, needsRevision, published, categori
                                                                 >
                                                                     Submit
                                                                 </Button>
-                                                                <Button size="small" startIcon={<Edit />}>
+                                                                <Button
+                                                                    size="small"
+                                                                    startIcon={<Edit />}
+                                                                    onClick={() => handleOpenArticle(article.id)}
+                                                                >
                                                                     Edit
+                                                                </Button>
+                                                                <Button
+                                                                    size="small"
+                                                                    color="error"
+                                                                    startIcon={<Delete />}
+                                                                    onClick={() => handleDeleteArticle(article)}
+                                                                >
+                                                                    Delete
                                                                 </Button>
                                                             </CardActions>
                                                         </Card>
@@ -366,6 +424,16 @@ const WriterDashboard = ({ drafts, submitted, needsRevision, published, categori
                                                                     sx={{ mt: 1 }}
                                                                 />
                                                             </CardContent>
+                                                            <CardActions>
+                                                                <Button
+                                                                    size="small"
+                                                                    color="error"
+                                                                    startIcon={<Delete />}
+                                                                    onClick={() => handleDeleteArticle(article)}
+                                                                >
+                                                                    Delete
+                                                                </Button>
+                                                            </CardActions>
                                                         </Card>
                                                     ))
                                                 )}
@@ -395,8 +463,20 @@ const WriterDashboard = ({ drafts, submitted, needsRevision, published, categori
                                                                 )}
                                                             </CardContent>
                                                             <CardActions>
-                                                                <Button size="small" startIcon={<Edit />}>
+                                                                <Button
+                                                                    size="small"
+                                                                    startIcon={<Edit />}
+                                                                    onClick={() => handleOpenArticle(article.id)}
+                                                                >
                                                                     Revise
+                                                                </Button>
+                                                                <Button
+                                                                    size="small"
+                                                                    color="error"
+                                                                    startIcon={<Delete />}
+                                                                    onClick={() => handleDeleteArticle(article)}
+                                                                >
+                                                                    Delete
                                                                 </Button>
                                                             </CardActions>
                                                         </Card>
@@ -429,7 +509,11 @@ const WriterDashboard = ({ drafts, submitted, needsRevision, published, categori
                                                                 />
                                                             </CardContent>
                                                             <CardActions>
-                                                                <Button size="small" startIcon={<Visibility />}>
+                                                                <Button
+                                                                    size="small"
+                                                                    startIcon={<Visibility />}
+                                                                    onClick={() => handleViewPublished(article.id)}
+                                                                >
                                                                     View
                                                                 </Button>
                                                             </CardActions>

@@ -5,6 +5,7 @@ use App\Http\Controllers\EditorController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleSwitchController;
+use App\Http\Controllers\ArticleMessageController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -30,8 +31,10 @@ Route::get('/', function () {
 // Writer Routes
 Route::middleware(['web', 'auth', 'role:writer'])->prefix('writer')->name('writer.')->group(function () {
     Route::get('/dashboard', [WriterController::class, 'dashboard'])->name('dashboard');
+    Route::get('/articles/{article}/edit', [WriterController::class, 'edit'])->name('articles.edit');
     Route::post('/articles', [WriterController::class, 'store'])->name('articles.store');
     Route::put('/articles/{article}', [WriterController::class, 'update'])->name('articles.update');
+    Route::delete('/articles/{article}', [WriterController::class, 'destroy'])->name('articles.destroy');
     Route::post('/articles/{article}/submit', [WriterController::class, 'submit'])->name('articles.submit');
     Route::put('/articles/{article}/revise', [WriterController::class, 'revise'])->name('articles.revise');
 });
@@ -61,7 +64,11 @@ Route::middleware('auth')->group(function () {
     
     // Role switching routes
     Route::post('/switch-role/{role}', [RoleSwitchController::class, 'switchRole'])->name('role.switch');
+
+    // Article discussion (editor <-> writer)
+    Route::get('/articles/{article}/messages', [ArticleMessageController::class, 'index'])->name('articles.messages.index');
+    Route::post('/articles/{article}/messages', [ArticleMessageController::class, 'store'])->name('articles.messages.store');
 });
 
 require __DIR__.'/auth.php';
-require __DIR__.'/sample.php';
+

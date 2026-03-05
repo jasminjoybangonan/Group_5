@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useRef, useMemo, useCallback, useEffect } from 'react';
 import { Head, router } from '@inertiajs/react';
 import {
     Container,
@@ -21,7 +21,11 @@ import {
     Dialog,
     DialogTitle,
     DialogContent,
-    DialogActions
+    DialogActions,
+    List,
+    ListItem,
+    ListItemText,
+    CircularProgress
 } from '@mui/material';
 import {
     ArrowBack,
@@ -38,6 +42,10 @@ const Review = ({ article }) => {
     const [revisionDialog, setRevisionDialog] = useState(false);
     const [revisionComments, setRevisionComments] = useState('');
     const [content, setContent] = useState(article.content || '');
+    const [chatOpen, setChatOpen] = useState(false);
+    const [chatLoading, setChatLoading] = useState(false);
+    const [chatMessages, setChatMessages] = useState([]);
+    const [chatText, setChatText] = useState('');
     const editor = useRef(null);
 
     const config = useMemo(
@@ -52,13 +60,78 @@ const Review = ({ article }) => {
         []
     );
 
+    const isSubmitted = article?.status?.name === 'submitted';
+
+    const csrfToken = useMemo(() => {
+        const el = document.querySelector('meta[name="csrf-token"]');
+        return el?.getAttribute('content') || '';
+    }, []);
+
+    const loadChat = useCallback(async () => {
+        setChatLoading(true);
+        try {
+            const res = await fetch(`/articles/${article.id}/messages`, {
+                headers: {
+                    'Accept': 'application/json'
+                },
+                credentials: 'same-origin'
+            });
+            const data = await res.json();
+            setChatMessages(Array.isArray(data?.messages) ? data.messages : []);
+        } finally {
+            setChatLoading(false);
+        }
+    }, [article.id]);
+
+    const sendChat = useCallback(async () => {
+        const trimmed = chatText.trim();
+        if (!trimmed) return;
+
+        setChatLoading(true);
+        try {
+            await fetch(`/articles/${article.id}/messages`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ message: trimmed })
+            });
+            setChatText('');
+            await loadChat();
+        } finally {
+            setChatLoading(false);
+        }
+    }, [article.id, chatText, csrfToken, loadChat]);
+
+    useEffect(() => {
+        if (chatOpen) {
+            loadChat();
+        }
+    }, [chatOpen, loadChat]);
+
     const handlePublish = () => {
+        if (!isSubmitted) {
+            alert('Only submitted articles can be published.');
+            return;
+        }
         router.post(`/editor/articles/${article.id}/publish`, {}, {
             onSuccess: () => router.get('/editor/dashboard')
         });
     };
 
     const handleRequestRevision = () => {
+        if (!isSubmitted) {
+            alert('Only submitted articles can be sent back for revision.');
+            return;
+        }
+
+        if (!revisionComments.trim()) {
+            alert('Please enter revision comments before sending.');
+            return;
+        }
         router.post(`/editor/articles/${article.id}/revision`, {
             comments: revisionComments
         }, {
@@ -69,17 +142,25 @@ const Review = ({ article }) => {
     return (
         <>
             <Head title={`Review: ${article.title}`} />
+            <AppBar position="sticky" sx={{ backgroundColor: '#1565c0' }}>
+                <Toolbar>
+                    <Button
+                        color="inherit"
+                        startIcon={<ArrowBack />}
+                        onClick={() => router.get('/editor/dashboard')}
+                        sx={{ mr: 2, textTransform: 'none' }}
+                    >
+                        Back to Editor Dashboard
+                    </Button>
+                    <Typography variant="h6" sx={{ flexGrow: 1 }}>
+                        Editor - Review Article
+                    </Typography>
+                    <Chip label="Editor" color="secondary" size="small" />
+                </Toolbar>
+            </AppBar>
             <Fade in={true} timeout={1000}>
                 <Container maxWidth="lg">
                     <Box sx={{ py: 4 }}>
-                        <Button
-                            startIcon={<ArrowBack />}
-                            onClick={() => router.get('/editor/dashboard')}
-                            sx={{ mb: 3 }}
-                        >
-                            Back to Dashboard
-                        </Button>
-
                         <Paper sx={{ p: 4, mb: 4 }}>
                             <Box sx={{ mb: 3 }}>
                                 <Typography variant="h3" gutterBottom sx={{ fontWeight: 'bold', color: '#1976d2' }}>
@@ -168,11 +249,22 @@ const Review = ({ article }) => {
 
                             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
                                 <Button
+                                    variant="outlined"
+                                    color="primary"
+                                    size="large"
+                                    startIcon={<RateReview />}
+                                    onClick={() => setChatOpen(true)}
+                                    sx={{ px: 4 }}
+                                >
+                                    Open Chat
+                                </Button>
+                                <Button
                                     variant="contained"
                                     color="success"
                                     size="large"
                                     startIcon={<Publish />}
                                     onClick={handlePublish}
+                                    disabled={!isSubmitted}
                                     sx={{ px: 4 }}
                                 >
                                     Publish Article
@@ -183,6 +275,7 @@ const Review = ({ article }) => {
                                     size="large"
                                     startIcon={<Refresh />}
                                     onClick={() => setRevisionDialog(true)}
+                                    disabled={!isSubmitted}
                                     sx={{ px: 4 }}
                                 >
                                     Request Revision
@@ -222,6 +315,51 @@ const Review = ({ article }) => {
                         disabled={!revisionComments.trim()}
                     >
                         Send Revision Request
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog open={chatOpen} onClose={() => setChatOpen(false)} maxWidth="sm" fullWidth>
+                <DialogTitle>Article Discussion</DialogTitle>
+                <DialogContent>
+                    <Box sx={{ minHeight: 260, maxHeight: 360, overflowY: 'auto', mb: 2 }}>
+                        {chatLoading && (
+                            <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+                                <CircularProgress size={24} />
+                            </Box>
+                        )}
+                        {!chatLoading && chatMessages.length === 0 && (
+                            <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
+                                No messages yet. Start the conversation.
+                            </Typography>
+                        )}
+                        {!chatLoading && chatMessages.length > 0 && (
+                            <List dense>
+                                {chatMessages.map((m) => (
+                                    <ListItem key={m.id} alignItems="flex-start" disableGutters>
+                                        <ListItemText
+                                            primary={m.sender?.name || 'User'}
+                                            secondary={m.message}
+                                        />
+                                    </ListItem>
+                                ))}
+                            </List>
+                        )}
+                    </Box>
+
+                    <TextField
+                        fullWidth
+                        multiline
+                        minRows={2}
+                        label="Message"
+                        value={chatText}
+                        onChange={(e) => setChatText(e.target.value)}
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setChatOpen(false)}>Close</Button>
+                    <Button onClick={sendChat} variant="contained" disabled={chatLoading || !chatText.trim()}>
+                        Send
                     </Button>
                 </DialogActions>
             </Dialog>

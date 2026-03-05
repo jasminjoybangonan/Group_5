@@ -20,28 +20,5 @@ class DatabaseSeeder extends Seeder
             ArticleStatusSeeder::class,
             UserSeeder::class,
         ]);
-
-        // Create sample articles
-        Article::factory()
-            ->count(5)
-            ->draft()
-            ->create();
-
-        Article::factory()
-            ->count(3)
-            ->submitted()
-            ->create();
-
-        Article::factory()
-            ->count(2)
-            ->needsRevision()
-            ->has(Revision::factory()->count(1))
-            ->create();
-
-        Article::factory()
-            ->count(10)
-            ->published()
-            ->has(Comment::factory()->count(rand(1, 5)))
-            ->create();
     }
 }

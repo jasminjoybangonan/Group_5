@@ -135,6 +135,10 @@ const StudentDashboard = ({ publishedArticles, myComments, categories, selectedC
                             open={Boolean(anchorEl)}
                             onClose={handleMenuClose}
                         >
+                            <MuiMenuItem onClick={() => { handleMenuClose(); router.get('/profile'); }}>
+                                Profile
+                            </MuiMenuItem>
+                            <Divider />
                             <MuiMenuItem onClick={() => { switchRole('writer'); }}>
                                 Switch to Writer
                             </MuiMenuItem>

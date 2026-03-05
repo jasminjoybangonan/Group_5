@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Article;
+use App\Models\ArticleStatus;
 use App\Models\Category;
 use App\Notifications\ArticleSubmittedNotification;
 use Illuminate\Http\Request;
@@ -12,28 +13,38 @@ use Inertia\Inertia;
 
 class WriterController extends Controller
 {
+    private function statusId(string $name): int
+    {
+        return ArticleStatus::where('name', $name)->firstOrFail()->id;
+    }
+
     public function dashboard()
     {
         $user = Auth::user();
+        $draftId = $this->statusId('draft');
+        $submittedId = $this->statusId('submitted');
+        $needsRevisionId = $this->statusId('needs_revision');
+        $publishedId = $this->statusId('published');
+
         $drafts = Article::where('writer_id', $user->id)
-            ->where('status_id', 1) // Draft status
+            ->when($draftId, fn ($q) => $q->where('status_id', $draftId))
             ->with(['category', 'status'])
             ->get();
 
         $submitted = Article::where('writer_id', $user->id)
-            ->where('status_id', 2) // Submitted status
+            ->when($submittedId, fn ($q) => $q->where('status_id', $submittedId))
             ->with(['category', 'status'])
             ->get();
 
         $needsRevision = Article::where('writer_id', $user->id)
-            ->where('status_id', 3) // Needs revision status
+            ->when($needsRevisionId, fn ($q) => $q->where('status_id', $needsRevisionId))
             ->with(['category', 'status', 'revisions' => function($query) {
-                $query->latest()->first();
+                $query->latest();
             }])
             ->get();
 
         $published = Article::where('writer_id', $user->id)
-            ->where('status_id', 4) // Published status
+            ->when($publishedId, fn ($q) => $q->where('status_id', $publishedId))
             ->with(['category', 'status'])
             ->get();
 
@@ -45,6 +56,20 @@ class WriterController extends Controller
             'needsRevision' => $needsRevision,
             'published' => $published,
             'categories' => $categories
+        ]);
+    }
+
+    public function edit(Article $article)
+    {
+        $this->authorize('update', $article);
+
+        $article->load(['category', 'status', 'revisions' => function ($query) {
+            $query->latest();
+        }]);
+
+        return Inertia::render('Writer/Edit', [
+            'article' => $article,
+            'categories' => Category::all(),
         ]);
     }
 
@@ -63,7 +88,7 @@ class WriterController extends Controller
             'content' => $validated['content'],
             'category_id' => $validated['category_id'],
             'writer_id' => Auth::id(),
-            'status_id' => 1 // Draft status
+            'status_id' => $this->statusId('draft')
         ]);
 
         return redirect()->back()->with('success', 'Article created successfully!');
@@ -88,7 +113,7 @@ class WriterController extends Controller
     {
         $this->authorize('submit', $article);
 
-        $article->update(['status_id' => 2]); // Submitted status
+        $article->update(['status_id' => $this->statusId('submitted')]);
 
         // Notify all editors
         $editors = \App\Models\User::role('editor')->get();
@@ -111,5 +136,14 @@ class WriterController extends Controller
         $article->update(['status_id' => 2]); // Resubmit after revision
 
         return redirect()->back()->with('success', 'Article revised and resubmitted!');
+    }
+
+    public function destroy(Article $article)
+    {
+        $this->authorize('delete', $article);
+
+        $article->delete();
+
+        return redirect()->back()->with('success', 'Article deleted successfully!');
     }
 }

@@ -62,17 +62,25 @@ const ShowArticle = ({ article }) => {
     return (
         <>
             <Head title={article.title} />
+            <AppBar position="sticky" sx={{ backgroundColor: '#1565c0' }}>
+                <Toolbar>
+                    <Button
+                        color="inherit"
+                        startIcon={<ArrowBack />}
+                        onClick={() => router.get('/student/dashboard')}
+                        sx={{ mr: 2, textTransform: 'none' }}
+                    >
+                        Back to Student Dashboard
+                    </Button>
+                    <Typography variant="h6" sx={{ flexGrow: 1 }}>
+                        Student - View Article
+                    </Typography>
+                    <Chip label="Student" color="secondary" size="small" />
+                </Toolbar>
+            </AppBar>
             <Fade in={true} timeout={1000}>
                 <Container maxWidth="md">
                     <Box sx={{ py: 4 }}>
-                        <Button
-                            startIcon={<ArrowBack />}
-                            onClick={() => window.history.back()}
-                            sx={{ mb: 3 }}
-                        >
-                            Back to Dashboard
-                        </Button>
-
                         <Paper sx={{ p: 4, mb: 4 }}>
                             <Box sx={{ mb: 3 }}>
                                 <Typography variant="h3" gutterBottom sx={{ fontWeight: 'bold', color: '#1976d2' }}>

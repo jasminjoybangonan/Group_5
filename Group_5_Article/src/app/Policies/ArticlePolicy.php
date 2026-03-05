@@ -17,9 +17,16 @@ class ArticlePolicy
 
     public function update(User $user, Article $article): Response
     {
-        return $user->id === $article->writer_id && $article->isDraft()
+        return $user->id === $article->writer_id && ($article->isDraft() || $article->needsRevision())
             ? Response::allow()
-            : Response::deny('You can only edit your own draft articles.');
+            : Response::deny('You can only edit your own draft or revision-requested articles.');
+    }
+
+    public function delete(User $user, Article $article): Response
+    {
+        return $user->id === $article->writer_id && !$article->isPublished()
+            ? Response::allow()
+            : Response::deny('You can only delete your own non-published articles.');
     }
 
     public function submit(User $user, Article $article): Response
@@ -38,9 +45,9 @@ class ArticlePolicy
 
     public function review(User $user, Article $article): Response
     {
-        return $user->hasRole('editor') && $article->isSubmitted()
+        return $user->hasRole('editor') && ($article->isSubmitted() || $article->needsRevision())
             ? Response::allow()
-            : Response::deny('Only editors can review submitted articles.');
+            : Response::deny('Only editors can review submitted or revision-requested articles.');
     }
 
     public function requestRevision(User $user, Article $article): Response
@@ -67,7 +74,7 @@ class ArticlePolicy
             return Response::allow();
         }
 
-        if ($user->hasRole('editor') && $article->isSubmitted()) {
+        if ($user->hasRole('editor') && ($article->isSubmitted() || $article->needsRevision())) {
             return Response::allow();
         }
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Article;
+use App\Models\ArticleStatus;
 use App\Models\Revision;
 use App\Notifications\ArticlePublishedNotification;
 use App\Notifications\RevisionRequestedNotification;
@@ -13,17 +14,26 @@ use Inertia\Inertia;
 
 class EditorController extends Controller
 {
+    private function statusId(string $name): int
+    {
+        return ArticleStatus::where('name', $name)->firstOrFail()->id;
+    }
+
     public function dashboard()
     {
-        $pending = Article::where('status_id', 2) // Submitted status
+        $submittedId = $this->statusId('submitted');
+        $needsRevisionId = $this->statusId('needs_revision');
+        $publishedId = $this->statusId('published');
+
+        $pending = Article::when($submittedId, fn ($q) => $q->where('status_id', $submittedId))
             ->with(['writer', 'category', 'status'])
             ->get();
 
-        $needsRevision = Article::where('status_id', 3) // Needs revision status
+        $needsRevision = Article::when($needsRevisionId, fn ($q) => $q->where('status_id', $needsRevisionId))
             ->with(['writer', 'category', 'status', 'revisions'])
             ->get();
 
-        $published = Article::where('status_id', 4) // Published status
+        $published = Article::when($publishedId, fn ($q) => $q->where('status_id', $publishedId))
             ->where('editor_id', Auth::id())
             ->with(['writer', 'category', 'status'])
             ->get();
@@ -61,7 +71,7 @@ class EditorController extends Controller
         ]);
 
         $article->update([
-            'status_id' => 3, // Needs revision status
+            'status_id' => $this->statusId('needs_revision'),
             'editor_id' => Auth::id()
         ]);
 
@@ -76,7 +86,7 @@ class EditorController extends Controller
         $this->authorize('publish', $article);
 
         $article->update([
-            'status_id' => 4, // Published status
+            'status_id' => $this->statusId('published'),
             'editor_id' => Auth::id()
         ]);
 

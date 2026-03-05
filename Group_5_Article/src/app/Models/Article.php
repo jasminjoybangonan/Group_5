@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\User;
+use App\Models\ArticleStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -52,23 +53,44 @@ class Article extends Model
         return $this->hasMany(Comment::class);
     }
 
+    public function messages(): HasMany
+    {
+        return $this->hasMany(ArticleMessage::class)->latest();
+    }
+
     public function isPublished(): bool
     {
-        return $this->status->name === 'published';
+        if ($this->relationLoaded('status')) {
+            return $this->status?->name === 'published';
+        }
+
+        return ArticleStatus::whereKey($this->status_id)->value('name') === 'published';
     }
 
     public function isDraft(): bool
     {
-        return $this->status->name === 'draft';
+        if ($this->relationLoaded('status')) {
+            return $this->status?->name === 'draft';
+        }
+
+        return ArticleStatus::whereKey($this->status_id)->value('name') === 'draft';
     }
 
     public function isSubmitted(): bool
     {
-        return $this->status->name === 'submitted';
+        if ($this->relationLoaded('status')) {
+            return $this->status?->name === 'submitted';
+        }
+
+        return ArticleStatus::whereKey($this->status_id)->value('name') === 'submitted';
     }
 
     public function needsRevision(): bool
     {
-        return $this->status->name === 'needs_revision';
+        if ($this->relationLoaded('status')) {
+            return $this->status?->name === 'needs_revision';
+        }
+
+        return ArticleStatus::whereKey($this->status_id)->value('name') === 'needs_revision';
     }
 }

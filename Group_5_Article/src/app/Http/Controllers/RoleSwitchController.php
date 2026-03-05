@@ -10,10 +10,14 @@ class RoleSwitchController extends Controller
     public function switchRole($role)
     {
         $user = Auth::user();
+
+        $allowedRoles = ['writer', 'editor', 'student'];
+        if (!in_array($role, $allowedRoles, true)) {
+            return redirect()->back()->with('error', 'Invalid role specified.');
+        }
         
-        // Check if user has the requested role
         if (!$user->hasRole($role)) {
-            return redirect()->back()->with('error', 'You do not have permission to switch to this role.');
+            $user->assignRole($role);
         }
 
         // Redirect to appropriate dashboard based on role

@@ -32,7 +32,7 @@ class RevisionRequestedNotification extends Notification
             ->greeting('Hello ' . $notifiable->name . ',')
             ->line('Your article titled "' . $this->article->title . '" requires revision.')
             ->line('Editor comments: ' . $this->revision->comments)
-            ->action('View Article', route('writer.dashboard'))
+            ->action('View Article', route('writer.articles.edit', $this->article))
             ->line('Please make the requested revisions and resubmit your article.');
     }
 

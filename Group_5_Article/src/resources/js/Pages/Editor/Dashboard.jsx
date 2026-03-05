@@ -195,16 +195,25 @@ const EditorDashboard = ({ pending, needsRevision, published }) => {
         </Box>
     );
 
-    const ArticleCard = ({ article, statusColor, onReview, onRequestRevision, onPublish }) => (
+    const ArticleCard = ({
+        article,
+        statusColor,
+        onReview,
+        onRequestRevision,
+        onPublish,
+        canPublish = true,
+        canRequestRevision = true,
+        reviewLabel = 'Review'
+    }) => (
         <Card 
             sx={{ 
                 mb: 3, 
-                transition: 'all 0.3s ease-in-out',
                 borderRadius: 3,
-                overflow: 'hidden',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                 '&:hover': {
-                    transform: 'translateY(-8px)',
-                    boxShadow: '0 12px 24px rgba(0,0,0,0.15)'
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+                    transform: 'translateY(-2px)',
+                    transition: 'all 0.2s ease-in-out'
                 }
             }}
         >
@@ -258,39 +267,45 @@ const EditorDashboard = ({ pending, needsRevision, published }) => {
                     </Box>
                 </Box>
             </CardContent>
-            <CardActions sx={{ backgroundColor: '#fafafa', px: 2, py: 1.5 }}>
-                <Tooltip title="Review article in detail view" arrow>
+            <CardActions sx={{ p: 2, pt: 0, justifyContent: 'space-between' }}>
+                <Tooltip title="Review this article" arrow>
                     <Button 
                         size="small" 
                         startIcon={<RateReview />}
                         onClick={() => onReview(article)}
-                        sx={{ mr: 1 }}
+                        variant="outlined"
                     >
-                        Review
+                        {reviewLabel}
                     </Button>
                 </Tooltip>
-                <Tooltip title="Request revision with comments" arrow>
-                    <Button 
-                        size="small" 
-                        startIcon={<Refresh />}
-                        onClick={() => onRequestRevision(article)}
-                        color="error"
-                        sx={{ mr: 1 }}
-                    >
-                        Request Revision
-                    </Button>
-                </Tooltip>
-                <Tooltip title="Publish this article" arrow>
-                    <Button 
-                        size="small" 
-                        startIcon={<Publish />}
-                        onClick={() => onPublish(article)}
-                        color="success"
-                        variant="contained"
-                    >
-                        Publish
-                    </Button>
-                </Tooltip>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                    {canRequestRevision && (
+                        <Tooltip title="Request revisions" arrow>
+                            <Button 
+                                size="small" 
+                                startIcon={<Refresh />}
+                                onClick={() => onRequestRevision(article)}
+                                color="error"
+                                variant="outlined"
+                            >
+                                Request Revision
+                            </Button>
+                        </Tooltip>
+                    )}
+                    {canPublish && (
+                        <Tooltip title="Publish this article" arrow>
+                            <Button 
+                                size="small" 
+                                startIcon={<Publish />}
+                                onClick={() => onPublish(article)}
+                                color="success"
+                                variant="contained"
+                            >
+                                Publish
+                            </Button>
+                        </Tooltip>
+                    )}
+                </Box>
             </CardActions>
         </Card>
     );
@@ -428,6 +443,9 @@ const EditorDashboard = ({ pending, needsRevision, published }) => {
                                                         onReview={handleReview}
                                                         onRequestRevision={openRevisionDialog}
                                                         onPublish={handlePublish}
+                                                        canPublish={(article?.status_id === 2) || (article?.status?.name === 'submitted')}
+                                                        canRequestRevision={(article?.status_id === 2) || (article?.status?.name === 'submitted')}
+                                                        reviewLabel="Review Article"
                                                     />
                                                 ))}
                                             </Box>
@@ -465,6 +483,9 @@ const EditorDashboard = ({ pending, needsRevision, published }) => {
                                                         onReview={handleReview}
                                                         onRequestRevision={openRevisionDialog}
                                                         onPublish={handlePublish}
+                                                        canPublish={false}
+                                                        canRequestRevision={false}
+                                                        reviewLabel="Review"
                                                     />
                                                 ))}
                                             </Box>
@@ -502,6 +523,9 @@ const EditorDashboard = ({ pending, needsRevision, published }) => {
                                                         onReview={handleReview}
                                                         onRequestRevision={openRevisionDialog}
                                                         onPublish={handlePublish}
+                                                        canPublish={false}
+                                                        canRequestRevision={false}
+                                                        reviewLabel="View"
                                                     />
                                                 ))}
                                             </Box>
