@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Head, router, usePage } from '@inertiajs/react';
 import {
     Typography,
@@ -8,7 +8,6 @@ import {
     Card,
     CardContent,
     CardActions,
-    TextField,
     Avatar,
     Chip,
     IconButton,
@@ -16,10 +15,8 @@ import {
     MenuItem,
     ListItemIcon,
     Divider,
-    FormControl,
-    InputLabel,
-    Select,
-    Grid
+    Grid,
+    CircularProgress
 } from '@mui/material';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import {
@@ -31,16 +28,12 @@ import {
     Visibility,
     RateReview,
     Comment,
-    Article,
-    Search,
     Star,
     StarBorder
 } from '@mui/icons-material';
 
-const StudentPublishedArticles = ({ publishedArticles, categories, selectedCategory, favorites }) => {
-    const [anchorEl, setAnchorEl] = useState(null);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [categoryFilter, setCategoryFilter] = useState(selectedCategory || '');
+const StudentFavorites = ({ favorites }) => {
+    const [anchorEl, setAnchorEl] = React.useState(null);
 
     const { auth } = usePage().props;
 
@@ -72,26 +65,6 @@ const StudentPublishedArticles = ({ publishedArticles, categories, selectedCateg
         });
     };
 
-    const handleCategoryChange = (category) => {
-        setCategoryFilter(category);
-        router.get('/student/published-articles', { category: category }, { preserveState: true });
-    };
-
-    const handleSearch = (event) => {
-        setSearchTerm(event.target.value);
-    };
-
-    const filteredArticles = publishedArticles?.filter(article => {
-        const matchesSearch = article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           article.content.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesCategory = !categoryFilter || article.category_id == categoryFilter;
-        return matchesSearch && matchesCategory;
-    }) || [];
-
-    const handleViewArticle = (articleId) => {
-        router.get(`/student/articles/${articleId}`);
-    };
-
     const handleToggleFavorite = (articleId) => {
         router.post(`/student/articles/${articleId}/favorite`, {}, {
             preserveScroll: true
@@ -104,7 +77,7 @@ const StudentPublishedArticles = ({ publishedArticles, categories, selectedCateg
 
     return (
         <ThemeProvider theme={theme}>
-            <Head title="Published Articles" />
+            <Head title="My Favorites" />
             
             <Box sx={{ 
                 minHeight: "100vh", 
@@ -129,7 +102,7 @@ const StudentPublishedArticles = ({ publishedArticles, categories, selectedCateg
                             <ArrowBack />
                         </IconButton>
                         <Typography variant="h4" sx={{ color: '#ffffff', fontWeight: 'bold' }}>
-                            Published Articles
+                            My Favorites
                         </Typography>
                     </Box>
                     
@@ -189,136 +162,79 @@ const StudentPublishedArticles = ({ publishedArticles, categories, selectedCateg
 
                 {/* Main Content */}
                 <Box sx={{ flexGrow: 1, p: 3 }}>
-                    {/* Search and Filter Section */}
-                    <Paper sx={{ p: 3, backgroundColor: '#1e293b', border: '1px solid #334155', mb: 4 }}>
-                        <Grid container spacing={3} alignItems="center">
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    fullWidth
-                                    placeholder="Search articles..."
-                                    value={searchTerm}
-                                    onChange={handleSearch}
-                                    InputProps={{
-                                        startAdornment: <Search sx={{ color: '#94a3b8', mr: 1 }} />
-                                    }}
-                                    sx={{ 
-                                        '& .MuiOutlinedInput-root': {
-                                            '& fieldset': {
-                                                borderColor: '#334155',
-                                            },
-                                            '&:hover fieldset': {
-                                                borderColor: '#60a5fa',
-                                            },
-                                            '&.Mui-focused fieldset': {
-                                                borderColor: '#60a5fa',
-                                            },
-                                        },
-                                        '& .MuiInputLabel-root': {
-                                            color: '#94a3b8',
-                                        },
-                                        '& .MuiInputLabel-focused': {
-                                            color: '#60a5fa',
-                                        }
-                                    }}
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                                <FormControl fullWidth>
-                                    <InputLabel sx={{ color: '#94a3b8' }}>Category</InputLabel>
-                                    <Select
-                                        value={categoryFilter}
-                                        label="Category"
-                                        onChange={(e) => handleCategoryChange(e.target.value)}
-                                        sx={{ 
-                                            '& .MuiOutlinedInput-notchedOutline': {
-                                                borderColor: '#334155',
-                                            },
-                                            '&:hover .MuiOutlinedInput-notchedOutline': {
-                                                borderColor: '#60a5fa',
-                                            },
-                                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                                borderColor: '#60a5fa',
-                                            },
-                                            '& .MuiSvgIcon-root': {
-                                                color: '#94a3b8',
-                                            }
-                                        }}
-                                    >
-                                        <MenuItem value="">All Categories</MenuItem>
-                                        {categories?.map((category) => (
-                                            <MenuItem key={category.id} value={category.id}>
-                                                {category.name}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                            </Grid>
-                        </Grid>
-                    </Paper>
-
-                    {/* Articles Grid */}
-                    {filteredArticles.length === 0 ? (
+                    <Typography variant="h5" sx={{ color: '#ef4444', mb: 3, fontWeight: 'bold' }}>
+                        My Favorite Articles ({favorites?.length || 0})
+                    </Typography>
+                    
+                    {favorites?.length === 0 ? (
                         <Paper sx={{ 
-                            p: 6, 
+                            p: 4, 
                             backgroundColor: '#1e293b', 
                             border: '1px solid #334155',
                             textAlign: 'center'
                         }}>
-                            <Typography variant="h6" sx={{ color: '#94a3b8', mb: 2 }}>
-                                No published articles found
+                            <Typography variant="h6" sx={{ color: '#94a3b8', mb: 3 }}>
+                                Start adding your favorite articles!
                             </Typography>
-                            <Typography variant="body2" sx={{ color: '#64748b' }}>
-                                Try adjusting your search or filter criteria
-                            </Typography>
+                            <Button
+                                variant="contained"
+                                size="large"
+                                startIcon={<Visibility />}
+                                onClick={() => router.get('/student/published-articles')}
+                                sx={{ 
+                                    px: 4,
+                                    bgcolor: '#10b981',
+                                    '&:hover': { bgcolor: '#059669' }
+                                }}
+                            >
+                                Browse Articles
+                            </Button>
                         </Paper>
                     ) : (
                         <Grid container spacing={3}>
-                            {filteredArticles.map((article, index) => (
-                                <Grid item xs={12} md={6} lg={4} key={article.id}>
+                            {favorites.map((favorite, index) => (
+                                <Grid item xs={12} md={6} lg={4} key={favorite.id}>
                                     <Card sx={{ 
                                         backgroundColor: '#1e293b', 
                                         border: '1px solid #334155',
-                                        height: '100%',
-                                        display: 'flex',
-                                        flexDirection: 'column'
+                                        height: '100%'
                                     }}>
-                                        <CardContent sx={{ flexGrow: 1 }}>
+                                        <CardContent>
                                             <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
+                                                <Avatar sx={{ mr: 2, bgcolor: '#ef4444' }}>
+                                                    {favorite.article?.writer?.name?.charAt(0) || 'W'}
+                                                </Avatar>
                                                 <Box sx={{ flexGrow: 1 }}>
-                                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                                        <Avatar sx={{ mr: 2, bgcolor: '#10b981' }}>
-                                                            {article.writer?.name?.charAt(0) || 'W'}
-                                                        </Avatar>
-                                                        <Box sx={{ flexGrow: 1 }}>
-                                                            <Typography variant="h6" sx={{ color: '#ffffff', mb: 1 }}>
-                                                                {article.title}
-                                                            </Typography>
-                                                            <Typography variant="body2" sx={{ color: '#94a3b8' }}>
-                                                                By {article.writer?.name}
-                                                            </Typography>
-                                                        </Box>
-                                                    </Box>
+                                                    <Typography variant="h6" sx={{ color: '#ffffff', mb: 1 }}>
+                                                        Favorite {index + 1}
+                                                    </Typography>
+                                                    <Typography variant="subtitle1" sx={{ color: '#94a3b8' }}>
+                                                        {favorite.article?.title}
+                                                    </Typography>
+                                                    <Typography variant="body2" sx={{ color: '#64748b' }}>
+                                                        By {favorite.article?.writer?.name}
+                                                    </Typography>
                                                 </Box>
                                                 <IconButton 
-                                                    onClick={() => handleToggleFavorite(article.id)}
+                                                    onClick={() => handleToggleFavorite(favorite.article_id)}
                                                     sx={{ 
-                                                        color: isFavorite(article.id) ? '#f59e0b' : '#94a3b8',
-                                                        '&:hover': { color: '#f59e0b' }
+                                                        color: '#ef4444',
+                                                        '&:hover': { color: '#dc2626' }
                                                     }}
                                                 >
-                                                    {isFavorite(article.id) ? <Star /> : <StarBorder />}
+                                                    <Star />
                                                 </IconButton>
                                             </Box>
                                             
                                             <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
                                                 <Chip
-                                                    icon={<Article />}
-                                                    label={article.category?.name}
+                                                    icon={<Visibility />}
+                                                    label={favorite.article?.category?.name}
                                                     size="small"
-                                                    sx={{ bgcolor: '#0f172a', color: '#10b981', border: '1px solid #10b981' }}
+                                                    sx={{ bgcolor: '#0f172a', color: '#ef4444', border: '1px solid #ef4444' }}
                                                 />
                                                 <Chip
-                                                    label={article.status?.label}
+                                                    label={favorite.article?.status?.label}
                                                     size="small"
                                                     sx={{ bgcolor: '#10b981', color: '#fff' }}
                                                 />
@@ -329,19 +245,19 @@ const StudentPublishedArticles = ({ publishedArticles, categories, selectedCateg
                                                 overflow: 'hidden',
                                                 textOverflow: 'ellipsis',
                                                 display: '-webkit-box',
-                                                WebkitLineClamp: 3,
+                                                WebkitLineClamp: 2,
                                                 WebkitBoxOrient: 'vertical',
                                                 mb: 2
                                             }}>
-                                                {article.content}
+                                                {favorite.article?.content}
                                             </Typography>
                                         </CardContent>
                                         
-                                        <CardActions sx={{ p: 2, pt: 0 }}>
+                                        <CardActions>
                                             <Button
                                                 size="small"
                                                 startIcon={<Visibility />}
-                                                onClick={() => handleViewArticle(article.id)}
+                                                onClick={() => router.get(`/student/articles/${favorite.article_id}`)}
                                                 sx={{ 
                                                     color: '#10b981',
                                                     borderColor: '#10b981',
@@ -353,7 +269,7 @@ const StudentPublishedArticles = ({ publishedArticles, categories, selectedCateg
                                             <Button
                                                 size="small"
                                                 startIcon={<Comment />}
-                                                onClick={() => handleViewArticle(article.id)}
+                                                onClick={() => router.get(`/student/articles/${favorite.article_id}`)}
                                                 sx={{ 
                                                     color: '#60a5fa',
                                                     borderColor: '#60a5fa',
@@ -374,4 +290,4 @@ const StudentPublishedArticles = ({ publishedArticles, categories, selectedCateg
     );
 };
 
-export default StudentPublishedArticles;
+export default StudentFavorites;

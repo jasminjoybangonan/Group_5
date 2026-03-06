@@ -1,50 +1,65 @@
 import React, { useState } from 'react';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import {
-    Container,
     Typography,
     Box,
     Paper,
-    Grid,
     Button,
     Card,
     CardContent,
-    Alert,
-    Fade,
-    AppBar,
-    Toolbar,
-    Drawer,
-    List,
-    ListItem,
-    ListItemIcon,
-    ListItemText,
-    Divider,
-    IconButton,
+    CardActions,
     Avatar,
     Chip,
-    Menu as MuiMenu,
-    MenuItem as MuiMenuItem,
-    Stack
+    IconButton,
+    Menu,
+    MenuItem,
+    ListItemIcon,
+    Divider,
+    Grid,
+    List,
+    ListItem,
+    ListItemText
 } from '@mui/material';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
 import {
+    ArrowBack,
+    Person,
+    Logout,
+    Menu as MenuIcon,
+    Edit,
+    Visibility,
+    RateReview,
     Article,
     Comment,
-    Menu,
-    Dashboard,
-    Visibility,
-    Chat,
-    Person,
-    Logout
+    TrendingUp,
+    Favorite,
+    FavoriteBorder
 } from '@mui/icons-material';
 
-const drawerWidth = 240;
-
-const StudentDashboard = ({ publishedArticles, myComments, categories, selectedCategory }) => {
-    const [drawerOpen, setDrawerOpen] = useState(false);
+const StudentDashboard = ({ publishedArticles, myComments, stats, favorites }) => {
     const [anchorEl, setAnchorEl] = useState(null);
+    const [selectedFilter, setSelectedFilter] = useState('dashboard');
 
-    const handleViewArticle = (article) => {
-        router.visit(`/student/articles/${article.id}`);
+    const { auth } = usePage().props;
+
+    // Theme from Login.jsx - same as Dashboard
+    const theme = createTheme({
+        palette: {
+            mode: "dark",
+            background: { default: "#0b1220", paper: "#0f172a" },
+            primary: { main: "#60a5fa" },
+            secondary: { main: "#22d3ee" },
+            text: { primary: "#ffffff" }
+        },
+        typography: { fontFamily: '"Times New Roman", Times, serif' }
+    });
+
+    const handleMenuOpen = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleMenuClose = () => {
+        setAnchorEl(null);
     };
 
     const handleLogout = () => {
@@ -55,309 +70,666 @@ const StudentDashboard = ({ publishedArticles, myComments, categories, selectedC
         });
     };
 
-    const switchRole = (role) => {
-        router.post(`/switch-role/${role}`, {}, {
-            onFinish: () => {
-                handleMenuClose();
-            }
+    const handleFilterClick = (filter) => {
+        setSelectedFilter(filter);
+    };
+
+    const handleToggleFavorite = (articleId) => {
+        router.post(`/student/articles/${articleId}/favorite`, {}, {
+            preserveScroll: true
         });
     };
 
-    const handleMenuClick = (event) => {
-        setAnchorEl(event.currentTarget);
+    const isFavorite = (articleId) => {
+        return favorites?.some(fav => fav.article_id === articleId) || false;
     };
 
-    const handleMenuClose = () => {
-        setAnchorEl(null);
-    };
-
-    const drawer = (
-        <div>
-            <Toolbar>
-                <Typography variant="h6" noWrap component="div">
-                    Student Panel
-                </Typography>
-            </Toolbar>
-            <Divider />
-            <List>
-                <ListItem button>
-                    <ListItemIcon>
-                        <Dashboard />
-                    </ListItemIcon>
-                    <ListItemText primary="Dashboard" />
-                </ListItem>
-                <ListItem button>
-                    <ListItemIcon>
-                        <Article />
-                    </ListItemIcon>
-                    <ListItemText primary="Published Articles" />
-                </ListItem>
-                <ListItem button>
-                    <ListItemIcon>
-                        <Comment />
-                    </ListItemIcon>
-                    <ListItemText primary="My Comments" />
-                </ListItem>
-            </List>
-        </div>
-    );
-
-    return (
-        <>
-            <Head title="Student Dashboard" />
-            <Box sx={{ display: 'flex' }}>
-                <AppBar
-                    position="fixed"
-                    sx={{ width: `calc(100% - ${drawerWidth}px)`, ml: `${drawerWidth}px` }}
-                >
-                    <Toolbar>
-                        <IconButton
-                            color="inherit"
-                            aria-label="open drawer"
-                            edge="start"
-                            onClick={() => setDrawerOpen(!drawerOpen)}
-                            sx={{ mr: 2, display: { sm: 'none' } }}
-                        >
-                            <Menu />
-                        </IconButton>
-                        <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-                            Student Dashboard
+    const getFilteredContent = () => {
+        switch(selectedFilter) {
+            case 'favorites':
+                return (
+                    <Box>
+                        <Typography variant="h5" sx={{ color: '#ef4444', mb: 3, fontWeight: 'bold' }}>
+                            My Favorites Overview
                         </Typography>
-                        <IconButton
-                            color="inherit"
-                            onClick={handleMenuClick}
-                            sx={{ ml: 2 }}
-                        >
-                            <Person />
-                        </IconButton>
-                        <MuiMenu
-                            anchorEl={anchorEl}
-                            open={Boolean(anchorEl)}
-                            onClose={handleMenuClose}
-                        >
-                            <MuiMenuItem onClick={() => { handleMenuClose(); router.get('/profile'); }}>
-                                Profile
-                            </MuiMenuItem>
-                            <Divider />
-                            <MuiMenuItem onClick={() => { switchRole('writer'); }}>
-                                Switch to Writer
-                            </MuiMenuItem>
-                            <MuiMenuItem onClick={() => { switchRole('editor'); }}>
-                                Switch to Editor
-                            </MuiMenuItem>
-                            <Divider />
-                            <MuiMenuItem onClick={handleLogout}>
-                                <ListItemIcon>
-                                    <Logout fontSize="small" />
-                                </ListItemIcon>
-                                Logout
-                            </MuiMenuItem>
-                        </MuiMenu>
-                    </Toolbar>
-                </AppBar>
-                <Box
-                    component="nav"
-                    sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
-                >
-                    <Drawer
-                        variant="temporary"
-                        open={drawerOpen}
-                        onClose={() => setDrawerOpen(false)}
-                        ModalProps={{
-                            keepMounted: true,
-                        }}
-                        sx={{
-                            display: { xs: 'block', sm: 'none' },
-                            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
-                        }}
-                    >
-                        {drawer}
-                    </Drawer>
-                    <Drawer
-                        variant="permanent"
-                        sx={{
-                            display: { xs: 'none', sm: 'block' },
-                            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
-                        }}
-                        open
-                    >
-                        {drawer}
-                    </Drawer>
-                </Box>
-                <Box
-                    component="main"
-                    sx={{ flexGrow: 1, p: 3, width: { sm: `calc(100% - ${drawerWidth}px)` } }}
-                >
-                    <Toolbar />
-                    <Container maxWidth="lg">
-                        <Fade in={true} timeout={1000}>
-                            <Box>
-                                <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', color: '#1976d2' }}>
-                                    Student Dashboard
-                                </Typography>
-
-                                <Grid container spacing={3}>
-                                    <Grid item xs={12} lg={8}>
-                                        <Box sx={{ mb: 6 }}>
-                                            <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', color: '#1976d2', mb: 3 }}>
-                                                Published Articles
-                                            </Typography>
-
-                                            {!publishedArticles || publishedArticles.length === 0 ? (
-                                                <Alert severity="info" sx={{ mb: 2 }}>
-                                                    <Typography color="text.secondary">
-                                                        No published articles available yet. Check back later for new content!
+                        
+                        <Grid container spacing={3}>
+                            <Grid item xs={12} md={6}>
+                                <Paper sx={{ 
+                                    p: 4, 
+                                    backgroundColor: '#1e293b', 
+                                    border: '1px solid #334155',
+                                    textAlign: 'center',
+                                    cursor: 'pointer',
+                                    '&:hover': { border: '2px solid #ef4444' }
+                                }}
+                                    onClick={() => router.get('/student/favorites')}
+                                >
+                                    <Favorite sx={{ fontSize: 48, color: '#ef4444', mb: 2 }} />
+                                    <Typography variant="h4" sx={{ color: '#ef4444', fontWeight: 'bold', mb: 1 }}>
+                                        {favorites?.length || 0}
+                                    </Typography>
+                                    <Typography variant="body1" sx={{ color: '#ffffff', mb: 2 }}>
+                                        Favorite Articles
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+                                        Click to view all your favorite articles
+                                    </Typography>
+                                </Paper>
+                            </Grid>
+                            
+                            <Grid item xs={12} md={6}>
+                                <Paper sx={{ 
+                                    p: 4, 
+                                    backgroundColor: '#1e293b', 
+                                    border: '1px solid #334155',
+                                    textAlign: 'center'
+                                }}>
+                                    <Typography variant="h6" sx={{ color: '#ef4444', mb: 2 }}>
+                                        Recent Favorites
+                                    </Typography>
+                                    {favorites?.length === 0 ? (
+                                        <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+                                            No favorites yet. Click the heart icon on articles to add them to your favorites.
+                                        </Typography>
+                                    ) : (
+                                        <Box>
+                                            {favorites.slice(0, 3).map((favorite, index) => (
+                                                <Box key={favorite.id} sx={{ mb: 2, textAlign: 'left' }}>
+                                                    <Typography variant="body2" sx={{ color: '#ffffff', mb: 1 }}>
+                                                        {index + 1}. {favorite.article?.title}
                                                     </Typography>
-                                                </Alert>
-                                            ) : (
-                                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
-                                                    {publishedArticles.map((article) => (
-                                                        <Card key={article.id} sx={{ 
-                                                            minWidth: 280, 
-                                                            maxWidth: 320,
-                                                            flex: '1 1 calc(33.333% - 16px)',
-                                                            mb: 2,
-                                                            transition: 'transform 0.2s',
-                                                            '&:hover': { 
-                                                                transform: 'translateY(-4px)',
-                                                                boxShadow: 4
-                                                            }
-                                                        }}>
-                                                            <CardContent sx={{ p: 2 }}>
-                                                                <Typography variant="h6" gutterBottom sx={{ 
-                                                                    fontWeight: 'bold', 
-                                                                    fontSize: '1rem',
-                                                                    lineHeight: 1.2,
-                                                                    mb: 1,
-                                                                    color: '#1976d2'
-                                                                }}>
-                                                                    {article.title}
-                                                                </Typography>
-                                                                <Typography variant="body2" color="text.secondary" sx={{ 
-                                                                    fontSize: '0.875rem',
-                                                                    lineHeight: 1.4,
-                                                                    mb: 2,
-                                                                    display: '-webkit-box',
-                                                                    WebkitLineClamp: 3,
-                                                                    WebkitBoxOrient: 'vertical',
-                                                                    overflow: 'hidden'
-                                                                }}>
-                                                                    {article.content?.substring(0, 150)}...
-                                                                </Typography>
-                                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                                                                    <Chip
-                                                                        label={article.category?.name}
-                                                                        size="small"
-                                                                        color="primary"
-                                                                        variant="outlined"
-                                                                    />
-                                                                    <Chip
-                                                                        label={`By ${article.writer?.name || 'Unknown'}`}
-                                                                        size="small"
-                                                                        color="secondary"
-                                                                        variant="outlined"
-                                                                    />
-                                                                </Box>
-                                                                <Button
-                                                                    size="small"
-                                                                    variant="contained"
-                                                                    startIcon={<Visibility />}
-                                                                    onClick={() => handleViewArticle(article)}
-                                                                    sx={{ 
-                                                                        borderRadius: 2,
-                                                                        textTransform: 'none',
-                                                                        fontWeight: 'medium'
-                                                                    }}
-                                                                >
-                                                                    Read Article
-                                                                </Button>
-                                                            </CardContent>
-                                                        </Card>
-                                                    ))}
+                                                    <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+                                                        By {favorite.article?.writer?.name}
+                                                    </Typography>
                                                 </Box>
+                                            ))}
+                                            {favorites.length > 3 && (
+                                                <Button
+                                                    onClick={() => router.get('/student/favorites')}
+                                                    sx={{ 
+                                                        color: '#ef4444',
+                                                        borderColor: '#ef4444',
+                                                        '&:hover': { borderColor: '#dc2626', color: '#dc2626' }
+                                                    }}
+                                                >
+                                                    View All Favorites
+                                                </Button>
                                             )}
                                         </Box>
-                                    </Grid>
+                                    )}
+                                </Paper>
+                            </Grid>
+                        </Grid>
+                    </Box>
+                );
+            case 'articles':
+                return (
+                    <Box>
+                        <Typography variant="h5" sx={{ color: '#10b981', mb: 3, fontWeight: 'bold' }}>
+                            Published Articles Overview
+                        </Typography>
+                        
+                        <Grid container spacing={3}>
+                            <Grid item xs={12} md={6}>
+                                <Paper sx={{ 
+                                    p: 4, 
+                                    backgroundColor: '#1e293b', 
+                                    border: '1px solid #334155',
+                                    textAlign: 'center',
+                                    cursor: 'pointer',
+                                    '&:hover': { border: '2px solid #10b981' }
+                                }}
+                                    onClick={() => router.get('/student/published-articles')}
+                                >
+                                    <Article sx={{ fontSize: 48, color: '#10b981', mb: 2 }} />
+                                    <Typography variant="h4" sx={{ color: '#10b981', fontWeight: 'bold', mb: 1 }}>
+                                        {publishedArticles?.length || 0}
+                                    </Typography>
+                                    <Typography variant="body1" sx={{ color: '#ffffff', mb: 2 }}>
+                                        Published Articles
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+                                        Click to browse all published articles
+                                    </Typography>
+                                </Paper>
+                            </Grid>
+                            
+                            <Grid item xs={12} md={6}>
+                                <Paper sx={{ 
+                                    p: 4, 
+                                    backgroundColor: '#1e293b', 
+                                    border: '1px solid #334155',
+                                    textAlign: 'center'
+                                }}>
+                                    <Typography variant="h6" sx={{ color: '#10b981', mb: 2 }}>
+                                        Recent Articles
+                                    </Typography>
+                                    {publishedArticles?.length === 0 ? (
+                                        <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+                                            No published articles available yet.
+                                        </Typography>
+                                    ) : (
+                                        <Box>
+                                            {publishedArticles.slice(0, 3).map((article, index) => (
+                                                <Box key={article.id} sx={{ mb: 2, textAlign: 'left' }}>
+                                                    <Typography variant="body2" sx={{ color: '#ffffff', mb: 1 }}>
+                                                        {index + 1}. {article.title}
+                                                    </Typography>
+                                                    <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+                                                        By {article.writer?.name}
+                                                    </Typography>
+                                                </Box>
+                                            ))}
+                                            {publishedArticles.length > 3 && (
+                                                <Button
+                                                    onClick={() => router.get('/student/published-articles')}
+                                                    sx={{ 
+                                                        color: '#10b981',
+                                                        borderColor: '#10b981',
+                                                        '&:hover': { borderColor: '#059669', color: '#059669' }
+                                                    }}
+                                                >
+                                                    View All Articles
+                                                </Button>
+                                            )}
+                                        </Box>
+                                    )}
+                                </Paper>
+                            </Grid>
+                        </Grid>
+                    </Box>
+                );
+            case 'comments':
+                return (
+                    <Box>
+                        <Typography variant="h5" sx={{ color: '#60a5fa', mb: 3, fontWeight: 'bold' }}>
+                            My Comments Overview
+                        </Typography>
+                        
+                        <Grid container spacing={3}>
+                            <Grid item xs={12} md={6}>
+                                <Paper sx={{ 
+                                    p: 4, 
+                                    backgroundColor: '#1e293b', 
+                                    border: '1px solid #334155',
+                                    textAlign: 'center',
+                                    cursor: 'pointer',
+                                    '&:hover': { border: '2px solid #60a5fa' }
+                                }}
+                                    onClick={() => router.get('/student/my-comments')}
+                                >
+                                    <Comment sx={{ fontSize: 48, color: '#60a5fa', mb: 2 }} />
+                                    <Typography variant="h4" sx={{ color: '#60a5fa', fontWeight: 'bold', mb: 1 }}>
+                                        {myComments?.length || 0}
+                                    </Typography>
+                                    <Typography variant="body1" sx={{ color: '#ffffff', mb: 2 }}>
+                                        My Comments
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+                                        Click to view all your comments
+                                    </Typography>
+                                </Paper>
+                            </Grid>
+                            
+                            <Grid item xs={12} md={6}>
+                                <Paper sx={{ 
+                                    p: 4, 
+                                    backgroundColor: '#1e293b', 
+                                    border: '1px solid #334155',
+                                    textAlign: 'center'
+                                }}>
+                                    <Typography variant="h6" sx={{ color: '#60a5fa', mb: 2 }}>
+                                        Recent Comments
+                                    </Typography>
+                                    {myComments?.length === 0 ? (
+                                        <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+                                            No comments yet. Start engaging with articles!
+                                        </Typography>
+                                    ) : (
+                                        <Box>
+                                            {myComments.slice(0, 3).map((comment, index) => (
+                                                <Box key={comment.id} sx={{ mb: 2, textAlign: 'left' }}>
+                                                    <Typography variant="body2" sx={{ color: '#ffffff', mb: 1 }}>
+                                                        {index + 1}. {comment.article?.title}
+                                                    </Typography>
+                                                    <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+                                                        {comment.message ? comment.message.substring(0, 50) + '...' : 'No message'}
+                                                    </Typography>
+                                                </Box>
+                                            ))}
+                                            {myComments.length > 3 && (
+                                                <Button
+                                                    onClick={() => router.get('/student/my-comments')}
+                                                    sx={{ 
+                                                        color: '#60a5fa',
+                                                        borderColor: '#60a5fa',
+                                                        '&:hover': { borderColor: '#3b82f6', color: '#3b82f6' }
+                                                    }}
+                                                >
+                                                    View All Comments
+                                                </Button>
+                                            )}
+                                        </Box>
+                                    )}
+                                </Paper>
+                            </Grid>
+                        </Grid>
+                    </Box>
+                );
+            default:
+                return (
+                    <Box>
+                        <Typography variant="h5" sx={{ color: '#10b981', mb: 3, fontWeight: 'bold' }}>
+                            Student Dashboard Overview
+                        </Typography>
+                        
+                        {/* Statistics Cards */}
+                        <Grid container spacing={3} sx={{ mb: 4 }}>
+                            <Grid item xs={12} md={3}>
+                                <Paper sx={{ 
+                                    p: 3, 
+                                    backgroundColor: '#1e293b', 
+                                    border: '1px solid #334155',
+                                    textAlign: 'center'
+                                }}>
+                                    <Typography variant="h3" sx={{ color: '#10b981', fontWeight: 'bold' }}>
+                                        {stats?.totalArticles || 0}
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+                                        Published Articles
+                                    </Typography>
+                                </Paper>
+                            </Grid>
+                            <Grid item xs={12} md={3}>
+                                <Paper sx={{ 
+                                    p: 3, 
+                                    backgroundColor: '#1e293b', 
+                                    border: '1px solid #334155',
+                                    textAlign: 'center'
+                                }}>
+                                    <Typography variant="h3" sx={{ color: '#60a5fa', fontWeight: 'bold' }}>
+                                        {stats?.totalComments || 0}
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+                                        My Comments
+                                    </Typography>
+                                </Paper>
+                            </Grid>
+                            <Grid item xs={12} md={3}>
+                                <Paper sx={{ 
+                                    p: 3, 
+                                    backgroundColor: '#1e293b', 
+                                    border: '1px solid #334155',
+                                    textAlign: 'center'
+                                }}>
+                                    <Typography variant="h3" sx={{ color: '#ef4444', fontWeight: 'bold' }}>
+                                        {favorites?.length || 0}
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+                                        My Favorites
+                                    </Typography>
+                                </Paper>
+                            </Grid>
+                            <Grid item xs={12} md={3}>
+                                <Paper sx={{ 
+                                    p: 3, 
+                                    backgroundColor: '#1e293b', 
+                                    border: '1px solid #334155',
+                                    textAlign: 'center'
+                                }}>
+                                    <Typography variant="h3" sx={{ color: '#f59e0b', fontWeight: 'bold' }}>
+                                        {stats?.activeThisWeek || 0}
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+                                        Active This Week
+                                    </Typography>
+                                </Paper>
+                            </Grid>
+                        </Grid>
 
-                                    <Grid item xs={12} lg={4}>
-                                        <Card sx={{ mb: 3 }}>
-                                            <CardContent>
-                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                                                    <Typography variant="h6" color="secondary">
-                                                        My Comments ({myComments?.length || 0})
-                                                    </Typography>
-                                                    <Button 
-                                                        variant="outlined" 
-                                                        size="small"
-                                                        onClick={() => router.visit('/student/my-comments')}
-                                                        startIcon={<Comment />}
-                                                    >
-                                                        View All
-                                                    </Button>
-                                                </Box>
-                                                {myComments?.length === 0 ? (
-                                                    <Typography color="text.secondary">You haven't commented yet</Typography>
-                                                ) : (
-                                                    <Stack spacing={2}>
-                                                        {myComments.slice(0, 3).map((comment) => (
-                                                            <Card key={comment.id} sx={{ p: 2, bgcolor: 'grey.50' }}>
-                                                                <Typography variant="subtitle2" fontWeight="bold" color="primary">
-                                                                    On: {comment.article?.title}
-                                                                </Typography>
-                                                                <Typography variant="body2" sx={{ mt: 1 }}>
-                                                                    {comment.content?.substring(0, 100)}...
-                                                                </Typography>
-                                                                <Typography variant="caption" color="text.secondary">
-                                                                    {new Date(comment.created_at).toLocaleDateString()}
-                                                                </Typography>
-                                                            </Card>
-                                                        ))}
-                                                        {myComments.length > 3 && (
-                                                            <Button 
-                                                                variant="text" 
-                                                                size="small"
-                                                                onClick={() => router.visit('/student/my-comments')}
-                                                                sx={{ alignSelf: 'center' }}
-                                                            >
-                                                                View {myComments.length - 3} more comments
-                                                            </Button>
-                                                        )}
-                                                    </Stack>
-                                                )}
-                                            </CardContent>
-                                        </Card>
+                        {/* Quick Access Cards */}
+                        <Grid container spacing={3}>
+                            <Grid item xs={12} md={4}>
+                                <Paper sx={{ 
+                                    p: 4, 
+                                    backgroundColor: '#1e293b', 
+                                    border: '1px solid #334155',
+                                    textAlign: 'center',
+                                    cursor: 'pointer',
+                                    '&:hover': { border: '2px solid #10b981' }
+                                }}
+                                    onClick={() => router.get('/student/published-articles')}
+                                >
+                                    <Article sx={{ fontSize: 48, color: '#10b981', mb: 2 }} />
+                                    <Typography variant="h5" sx={{ color: '#10b981', fontWeight: 'bold', mb: 1 }}>
+                                        Browse Articles
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: '#94a3b8', mb: 2 }}>
+                                        Explore all published articles from various writers
+                                    </Typography>
+                                    <Button
+                                        variant="outlined"
+                                        sx={{ 
+                                            color: '#10b981',
+                                            borderColor: '#10b981',
+                                            '&:hover': { borderColor: '#059669', color: '#059669' }
+                                        }}
+                                    >
+                                        View Articles
+                                    </Button>
+                                </Paper>
+                            </Grid>
+                            
+                            <Grid item xs={12} md={4}>
+                                <Paper sx={{ 
+                                    p: 4, 
+                                    backgroundColor: '#1e293b', 
+                                    border: '1px solid #334155',
+                                    textAlign: 'center',
+                                    cursor: 'pointer',
+                                    '&:hover': { border: '2px solid #ef4444' }
+                                }}
+                                    onClick={() => router.get('/student/favorites')}
+                                >
+                                    <Favorite sx={{ fontSize: 48, color: '#ef4444', mb: 2 }} />
+                                    <Typography variant="h5" sx={{ color: '#ef4444', fontWeight: 'bold', mb: 1 }}>
+                                        My Favorites
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: '#94a3b8', mb: 2 }}>
+                                        View and manage your favorite articles
+                                    </Typography>
+                                    <Button
+                                        variant="outlined"
+                                        sx={{ 
+                                            color: '#ef4444',
+                                            borderColor: '#ef4444',
+                                            '&:hover': { borderColor: '#dc2626', color: '#dc2626' }
+                                        }}
+                                    >
+                                        View Favorites
+                                    </Button>
+                                </Paper>
+                            </Grid>
+                            
+                            <Grid item xs={12} md={4}>
+                                <Paper sx={{ 
+                                    p: 4, 
+                                    backgroundColor: '#1e293b', 
+                                    border: '1px solid #334155',
+                                    textAlign: 'center',
+                                    cursor: 'pointer',
+                                    '&:hover': { border: '2px solid #60a5fa' }
+                                }}
+                                    onClick={() => router.get('/student/my-comments')}
+                                >
+                                    <Comment sx={{ fontSize: 48, color: '#60a5fa', mb: 2 }} />
+                                    <Typography variant="h5" sx={{ color: '#60a5fa', fontWeight: 'bold', mb: 1 }}>
+                                        My Comments
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: '#94a3b8', mb: 2 }}>
+                                        View and manage all your comments
+                                    </Typography>
+                                    <Button
+                                        variant="outlined"
+                                        sx={{ 
+                                            color: '#60a5fa',
+                                            borderColor: '#60a5fa',
+                                            '&:hover': { borderColor: '#3b82f6', color: '#3b82f6' }
+                                        }}
+                                    >
+                                        View Comments
+                                    </Button>
+                                </Paper>
+                            </Grid>
+                        </Grid>
 
-                                        <Card>
-                                            <CardContent>
-                                                <Typography variant="h6" gutterBottom color="info.main">
-                                                    Engagement Stats
-                                                </Typography>
-                                                <Box sx={{ textAlign: 'center' }}>
-                                                    <Typography variant="h3" color="primary" fontWeight="bold">
-                                                        {myComments?.length || 0}
+                        {/* Recent Activity */}
+                        <Paper sx={{ p: 4, backgroundColor: '#1e293b', border: '1px solid #334155', mt: 4 }}>
+                            <Typography variant="h5" sx={{ color: '#10b981', mb: 3, fontWeight: 'bold' }}>
+                                Recent Activity
+                            </Typography>
+                            <Grid container spacing={3}>
+                                <Grid item xs={12} md={6}>
+                                    <Typography variant="h6" sx={{ color: '#10b981', mb: 2 }}>
+                                        Latest Articles
+                                    </Typography>
+                                    {publishedArticles?.length === 0 ? (
+                                        <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+                                            No articles available yet
+                                        </Typography>
+                                    ) : (
+                                        <Box>
+                                            {publishedArticles.slice(0, 2).map((article, index) => (
+                                                <Box key={article.id} sx={{ mb: 2 }}>
+                                                    <Typography variant="body2" sx={{ color: '#ffffff', mb: 1 }}>
+                                                        {index + 1}. {article.title}
                                                     </Typography>
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        Comments Posted
+                                                    <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+                                                        By {article.writer?.name} • {article.category?.name}
                                                     </Typography>
                                                 </Box>
-                                                <Box sx={{ textAlign: 'center', mt: 2 }}>
-                                                    <Typography variant="h3" color="success" fontWeight="bold">
-                                                        {publishedArticles?.length || 0}
-                                                    </Typography>
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        Articles Available
-                                                    </Typography>
-                                                </Box>
-                                            </CardContent>
-                                        </Card>
-                                    </Grid>
+                                            ))}
+                                        </Box>
+                                    )}
                                 </Grid>
-                            </Box>
-                        </Fade>
-                    </Container>
+                                <Grid item xs={12} md={6}>
+                                    <Typography variant="h6" sx={{ color: '#60a5fa', mb: 2 }}>
+                                        Latest Comments
+                                    </Typography>
+                                    {myComments?.length === 0 ? (
+                                        <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+                                            No comments yet
+                                        </Typography>
+                                    ) : (
+                                        <Box>
+                                            {myComments.slice(0, 2).map((comment, index) => (
+                                                <Box key={comment.id} sx={{ mb: 2 }}>
+                                                    <Typography variant="body2" sx={{ color: '#ffffff', mb: 1 }}>
+                                                        {index + 1}. {comment.article?.title}
+                                                    </Typography>
+                                                    <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+                                                        {comment.message ? comment.message.substring(0, 50) + '...' : 'No message'}
+                                                    </Typography>
+                                                </Box>
+                                            ))}
+                                        </Box>
+                                    )}
+                                </Grid>
+                            </Grid>
+                        </Paper>
+                    </Box>
+                );
+        }
+    };
+
+    return (
+        <ThemeProvider theme={theme}>
+            <Head title="Student Dashboard" />
+            
+            <Box sx={{ 
+                minHeight: "100vh", 
+                backgroundColor: "#0b1220",
+                display: 'flex',
+                flexDirection: 'column'
+            }}>
+                {/* Header - Same as Dashboard */}
+                <Box sx={{ 
+                    backgroundColor: '#0f172a', 
+                    borderBottom: '1px solid #334155',
+                    p: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <IconButton 
+                            component="a" 
+                            href="/" 
+                            sx={{ color: '#ffffff' }}
+                        >
+                            <ArrowBack />
+                        </IconButton>
+                        <Typography variant="h4" sx={{ color: '#ffffff', fontWeight: 'bold' }}>
+                            Student Dashboard
+                        </Typography>
+                    </Box>
+                    
+                    <IconButton color="inherit" onClick={handleMenuOpen} sx={{ color: '#ffffff' }}>
+                        <MenuIcon />
+                    </IconButton>
+                </Box>
+
+                {/* Menu - Same as Dashboard */}
+                <Menu
+                    anchorEl={anchorEl}
+                    open={Boolean(anchorEl)}
+                    onClose={handleMenuClose}
+                    PaperProps={{
+                        sx: {
+                            backgroundColor: '#1e293b',
+                            color: '#ffffff',
+                            border: '1px solid #334155'
+                        }
+                    }}
+                >
+                    <MenuItem onClick={() => { router.get('/profile.edit'); handleMenuClose(); }}>
+                        <ListItemIcon>
+                            <Person sx={{ color: '#60a5fa' }} />
+                        </ListItemIcon>
+                        Profile
+                    </MenuItem>
+                    
+                    <Divider sx={{ backgroundColor: '#334155' }} />
+                    <MenuItem onClick={() => { router.get('/writer/dashboard'); handleMenuClose(); }}>
+                        <ListItemIcon>
+                            <Edit sx={{ color: '#f59e0b' }} />
+                        </ListItemIcon>
+                        Switch to Writer
+                    </MenuItem>
+                    <MenuItem onClick={() => { router.get('/editor/dashboard'); handleMenuClose(); }}>
+                        <ListItemIcon>
+                            <RateReview sx={{ color: '#ef4444' }} />
+                        </ListItemIcon>
+                        Switch to Editor
+                    </MenuItem>
+                    <MenuItem onClick={() => { router.get('/student/dashboard'); handleMenuClose(); }}>
+                        <ListItemIcon>
+                            <Visibility sx={{ color: '#10b981' }} />
+                        </ListItemIcon>
+                        Switch to Student
+                    </MenuItem>
+                    
+                    <Divider sx={{ backgroundColor: '#334155' }} />
+                    <MenuItem onClick={handleLogout}>
+                        <ListItemIcon>
+                            <Logout sx={{ color: '#f59e0b' }} />
+                        </ListItemIcon>
+                        Logout
+                    </MenuItem>
+                </Menu>
+
+                {/* Main Content */}
+                <Box sx={{ flexGrow: 1, display: 'flex' }}>
+                    {/* Left Sidebar - Filter Buttons */}
+                    <Box sx={{ 
+                        width: 280,
+                        p: 2,
+                        backgroundColor: '#1e293b',
+                        border: '1px solid #334155',
+                        borderRadius: 2,
+                        mr: 2
+                    }}>
+                        <Typography variant="h6" sx={{ color: '#ffffff', mb: 3, fontWeight: 'bold' }}>
+                            Dashboard
+                        </Typography>
+                        
+                        <List sx={{ p: 0 }}>
+                            <ListItem 
+                                button 
+                                onClick={() => handleFilterClick('dashboard')}
+                                sx={{ 
+                                    mb: 1,
+                                    backgroundColor: selectedFilter === 'dashboard' ? '#10b981' : '#0f172a',
+                                    borderRadius: 2,
+                                    '&:hover': { backgroundColor: '#334155' }
+                                }}
+                            >
+                                <ListItemIcon>
+                                    <TrendingUp sx={{ color: selectedFilter === 'dashboard' ? '#fff' : '#10b981' }} />
+                                </ListItemIcon>
+                                <ListItemText 
+                                    primary="Dashboard" 
+                                    primaryTypographyProps={{ color: selectedFilter === 'dashboard' ? '#fff' : '#10b981', fontWeight: 'bold' }}
+                                />
+                            </ListItem>
+
+                            <ListItem 
+                                button 
+                                onClick={() => handleFilterClick('favorites')}
+                                sx={{ 
+                                    mb: 1,
+                                    backgroundColor: selectedFilter === 'favorites' ? '#ef4444' : '#0f172a',
+                                    borderRadius: 2,
+                                    '&:hover': { backgroundColor: '#334155' }
+                                }}
+                            >
+                                <ListItemIcon>
+                                    <Favorite sx={{ color: selectedFilter === 'favorites' ? '#fff' : '#ef4444' }} />
+                                </ListItemIcon>
+                                <ListItemText 
+                                    primary="My Favorites" 
+                                    primaryTypographyProps={{ color: selectedFilter === 'favorites' ? '#fff' : '#ef4444', fontWeight: 'bold' }}
+                                />
+                            </ListItem>
+
+                            <ListItem 
+                                button 
+                                onClick={() => handleFilterClick('articles')}
+                                sx={{ 
+                                    mb: 1,
+                                    backgroundColor: selectedFilter === 'articles' ? '#10b981' : '#0f172a',
+                                    borderRadius: 2,
+                                    '&:hover': { backgroundColor: '#334155' }
+                                }}
+                            >
+                                <ListItemIcon>
+                                    <Article sx={{ color: selectedFilter === 'articles' ? '#fff' : '#10b981' }} />
+                                </ListItemIcon>
+                                <ListItemText 
+                                    primary="Published Articles" 
+                                    primaryTypographyProps={{ color: selectedFilter === 'articles' ? '#fff' : '#10b981', fontWeight: 'bold' }}
+                                />
+                            </ListItem>
+
+                            <ListItem 
+                                button 
+                                onClick={() => handleFilterClick('comments')}
+                                sx={{ 
+                                    mb: 1,
+                                    backgroundColor: selectedFilter === 'comments' ? '#60a5fa' : '#0f172a',
+                                    borderRadius: 2,
+                                    '&:hover': { backgroundColor: '#334155' }
+                                }}
+                            >
+                                <ListItemIcon>
+                                    <Comment sx={{ color: selectedFilter === 'comments' ? '#fff' : '#60a5fa' }} />
+                                </ListItemIcon>
+                                <ListItemText 
+                                    primary="My Comments" 
+                                    primaryTypographyProps={{ color: selectedFilter === 'comments' ? '#fff' : '#60a5fa', fontWeight: 'bold' }}
+                                />
+                            </ListItem>
+                        </List>
+                    </Box>
+
+                    {/* Right Side - Content Display */}
+                    <Box sx={{ flexGrow: 1 }}>
+                        {getFilteredContent()}
+                    </Box>
                 </Box>
             </Box>
-        </>
+        </ThemeProvider>
     );
 };
 

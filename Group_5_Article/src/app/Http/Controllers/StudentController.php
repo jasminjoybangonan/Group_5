@@ -6,6 +6,7 @@ use App\Models\Article;
 use App\Models\ArticleStatus;
 use App\Models\Category;
 use App\Models\Comment;
+use App\Models\Favorite;
 use App\Notifications\CommentPostedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -22,6 +23,7 @@ class StudentController extends Controller
             return Inertia::render('Student/Dashboard', [
                 'publishedArticles' => collect([]),
                 'myComments' => collect([]),
+                'favorites' => collect([]),
                 'categories' => Category::all(),
                 'selectedCategory' => $request->category_id,
                 'error' => 'Article statuses not properly configured. Please contact administrator.'
@@ -32,24 +34,31 @@ class StudentController extends Controller
             ->with(['writer', 'category', 'comments' => function($query) {
                 $query->with('student')->latest();
             }]);
-
+        
         // Filter by category if selected
         if ($request->has('category_id') && $request->category_id) {
             $query->where('category_id', $request->category_id);
         }
-
+        
         $publishedArticles = $query->orderBy('created_at', 'desc')->get();
-
+        
         $categories = Category::all();
-
+        
         $myComments = Comment::where('student_id', Auth::id())
             ->with(['article', 'article.writer'])
+            ->latest()
+            ->get();
+
+        // Get user's favorite articles
+        $favorites = Favorite::where('student_id', Auth::id())
+            ->with(['article.writer', 'article.category', 'article.status'])
             ->latest()
             ->get();
 
         return Inertia::render('Student/Dashboard', [
             'publishedArticles' => $publishedArticles,
             'myComments' => $myComments,
+            'favorites' => $favorites,
             'categories' => $categories,
             'selectedCategory' => $request->category_id
         ]);
@@ -65,6 +74,7 @@ class StudentController extends Controller
                 'publishedArticles' => collect([]),
                 'categories' => Category::all(),
                 'selectedCategory' => $request->category_id,
+                'favorites' => collect([]),
                 'error' => 'Article statuses not properly configured. Please contact administrator.'
             ]);
         }
@@ -83,10 +93,17 @@ class StudentController extends Controller
 
         $categories = Category::all();
 
+        // Get user's favorite articles
+        $favorites = Favorite::where('student_id', Auth::id())
+            ->with(['article.writer', 'article.category', 'article.status'])
+            ->latest()
+            ->get();
+
         return Inertia::render('Student/PublishedArticles', [
             'publishedArticles' => $publishedArticles,
             'categories' => $categories,
-            'selectedCategory' => $request->category_id
+            'selectedCategory' => $request->category_id,
+            'favorites' => $favorites
         ]);
     }
 
@@ -108,12 +125,18 @@ class StudentController extends Controller
             abort(403, 'This article is not published yet.');
         }
 
+        // Check if article is favorited by current student
+        $isFavorited = Favorite::where('student_id', Auth::id())
+            ->where('article_id', $article->id)
+            ->exists();
+
         $article->load(['writer', 'category', 'comments' => function($query) {
             $query->with('student')->latest();
         }]);
 
         return Inertia::render('Student/ShowArticle', [
-            'article' => $article
+            'article' => $article,
+            'isFavorite' => $isFavorited
         ]);
     }
 
@@ -133,6 +156,53 @@ class StudentController extends Controller
         $article->writer->notify(new CommentPostedNotification($comment, $article));
 
         return redirect()->back()->with('success', 'Comment posted successfully!');
+    }
+
+    public function favorites()
+    {
+        $favorites = Favorite::where('student_id', Auth::id())
+            ->with(['article.writer', 'article.category', 'article.status'])
+            ->latest()
+            ->get();
+
+        return Inertia::render('Student/Favorites', [
+            'favorites' => $favorites
+        ]);
+    }
+
+    public function toggleFavorite(Request $request, Article $article)
+    {
+        try {
+            $existingFavorite = Favorite::where('student_id', Auth::id())
+                ->where('article_id', $article->id)
+                ->first();
+
+            if ($existingFavorite) {
+                // Remove from favorites
+                $existingFavorite->delete();
+                $isFavorited = false;
+                $message = 'Article removed from favorites';
+            } else {
+                // Add to favorites
+                Favorite::create([
+                    'student_id' => Auth::id(),
+                    'article_id' => $article->id
+                ]);
+                $isFavorited = true;
+                $message = 'Article added to favorites';
+            }
+
+            return response()->json([
+                'isFavorited' => $isFavorited,
+                'message' => $message
+            ]);
+        } catch (\Exception $e) {
+            // If there's an error (like table not existing), return an error response
+            return response()->json([
+                'error' => 'Favorites functionality not available. Please run migrations.',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function deleteComment(Request $request, Comment $comment)

@@ -73,6 +73,17 @@ class WriterController extends Controller
         ]);
     }
 
+    public function view(Article $article)
+    {
+        $this->authorize('view', $article);
+
+        $article->load(['category', 'status', 'writer']);
+
+        return Inertia::render('Writer/ViewArticle', [
+            'article' => $article,
+        ]);
+    }
+
     public function store(Request $request)
     {
         $this->authorize('create', Article::class);

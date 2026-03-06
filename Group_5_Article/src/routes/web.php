@@ -50,6 +50,7 @@ Route::get('/', function () {
 Route::middleware(['web', 'auth', 'role:writer'])->prefix('writer')->name('writer.')->group(function () {
     Route::get('/dashboard', [WriterController::class, 'dashboard'])->name('dashboard');
     Route::get('/articles/{article}/edit', [WriterController::class, 'edit'])->name('articles.edit');
+    Route::get('/articles/{article}/view', [WriterController::class, 'view'])->name('articles.view');
     Route::post('/articles', [WriterController::class, 'store'])->name('articles.store');
     Route::put('/articles/{article}', [WriterController::class, 'update'])->name('articles.update');
     Route::delete('/articles/{article}', [WriterController::class, 'destroy'])->name('articles.destroy');
@@ -73,7 +74,9 @@ Route::middleware(['web', 'auth', 'role:student'])->prefix('student')->name('stu
     Route::get('/dashboard', [StudentController::class, 'dashboard'])->name('dashboard');
     Route::get('/published-articles', [StudentController::class, 'publishedArticles'])->name('published.articles');
     Route::get('/my-comments', [StudentController::class, 'myComments'])->name('my.comments');
+    Route::get('/favorites', [StudentController::class, 'favorites'])->name('favorites');
     Route::get('/articles/{article}', [StudentController::class, 'show'])->name('articles.show');
+    Route::post('/articles/{article}/favorite', [StudentController::class, 'toggleFavorite'])->name('articles.favorite');
     Route::post('/articles/{article}/comment', [StudentController::class, 'comment'])->name('articles.comment');
     Route::delete('/comments/{comment}', [StudentController::class, 'deleteComment'])->name('comments.delete');
 });

@@ -34,18 +34,15 @@ import {
     Visibility,
     RateReview,
     Comment,
-    Send,
-    Star,
-    StarBorder
+    Send
 } from '@mui/icons-material';
 
-const StudentShowArticle = ({ article, isFavorite: initialFavorite = false }) => {
+const WriterViewArticle = ({ article }) => {
     const [anchorEl, setAnchorEl] = useState(null);
     const [chatOpen, setChatOpen] = useState(false);
     const [chatLoading, setChatLoading] = useState(false);
     const [chatMessages, setChatMessages] = useState([]);
     const [chatText, setChatText] = useState('');
-    const [isFavorite, setIsFavorite] = useState(initialFavorite);
 
     const { auth } = usePage().props;
 
@@ -73,15 +70,6 @@ const StudentShowArticle = ({ article, isFavorite: initialFavorite = false }) =>
         router.post('/logout', {}, {
             onFinish: () => {
                 handleMenuClose();
-            }
-        });
-    };
-
-    const handleToggleFavorite = () => {
-        router.post(`/student/articles/${article.id}/favorite`, {}, {
-            preserveScroll: true,
-            onSuccess: () => {
-                setIsFavorite(!isFavorite);
             }
         });
     };
@@ -138,7 +126,7 @@ const StudentShowArticle = ({ article, isFavorite: initialFavorite = false }) =>
 
     return (
         <ThemeProvider theme={theme}>
-            <Head title={`Read: ${article.title}`} />
+            <Head title={`View: ${article.title}`} />
             
             <Box sx={{ 
                 minHeight: "100vh", 
@@ -157,13 +145,13 @@ const StudentShowArticle = ({ article, isFavorite: initialFavorite = false }) =>
                 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         <IconButton 
-                            onClick={() => router.get('/student/dashboard')}
+                            onClick={() => router.get('/writer/dashboard')}
                             sx={{ color: '#ffffff' }}
                         >
                             <ArrowBack />
                         </IconButton>
                         <Typography variant="h4" sx={{ color: '#ffffff', fontWeight: 'bold' }}>
-                            Read Article
+                            View Published Article
                         </Typography>
                     </Box>
                     
@@ -224,50 +212,38 @@ const StudentShowArticle = ({ article, isFavorite: initialFavorite = false }) =>
                 {/* Main Content */}
                 <Box sx={{ flexGrow: 1, p: 3 }}>
                     <Paper sx={{ p: 4, backgroundColor: '#1e293b', border: '1px solid #334155', mb: 4 }}>
-                        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                            <Box sx={{ flexGrow: 1 }}>
-                                <Typography variant="h3" gutterBottom sx={{ fontWeight: 'bold', color: '#10b981' }}>
-                                    {article.title}
-                                </Typography>
-                                
-                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                    <Avatar sx={{ mr: 2, bgcolor: '#10b981' }}>
-                                        {article.writer?.name?.charAt(0) || 'W'}
-                                    </Avatar>
-                                    <Box>
-                                        <Typography variant="subtitle1" fontWeight="bold" sx={{ color: '#ffffff' }}>
-                                            By {article.writer?.name}
-                                        </Typography>
-                                        <Typography variant="body2" sx={{ color: '#94a3b8' }}>
-                                            Published on {new Date(article.created_at).toLocaleDateString()}
-                                        </Typography>
-                                    </Box>
+                        <Box sx={{ mb: 3 }}>
+                            <Typography variant="h3" gutterBottom sx={{ fontWeight: 'bold', color: '#10b981' }}>
+                                {article.title}
+                            </Typography>
+                            
+                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                <Avatar sx={{ mr: 2, bgcolor: '#f59e0b' }}>
+                                    {article.writer?.name?.charAt(0) || 'W'}
+                                </Avatar>
+                                <Box>
+                                    <Typography variant="subtitle1" fontWeight="bold" sx={{ color: '#ffffff' }}>
+                                        By {article.writer?.name}
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+                                        Published on {new Date(article.created_at).toLocaleDateString()}
+                                    </Typography>
                                 </Box>
                             </Box>
-                            
-                            <IconButton 
-                                onClick={handleToggleFavorite}
-                                sx={{ 
-                                    color: isFavorite ? '#f59e0b' : '#94a3b8',
-                                    '&:hover': { color: '#f59e0b' }
-                                }}
-                            >
-                                {isFavorite ? <Star /> : <StarBorder />}
-                            </IconButton>
-                        </Box>
 
-                        <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
-                            <Chip
-                                icon={<Visibility />}
-                                label={article.category?.name}
-                                size="small"
-                                sx={{ bgcolor: '#0f172a', color: '#10b981', border: '1px solid #10b981' }}
-                            />
-                            <Chip
-                                label={article.status?.label}
-                                size="small"
-                                sx={{ bgcolor: '#10b981', color: '#fff' }}
-                            />
+                            <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
+                                <Chip
+                                    icon={<Visibility />}
+                                    label={article.category?.name}
+                                    size="small"
+                                    sx={{ bgcolor: '#0f172a', color: '#10b981', border: '1px solid #10b981' }}
+                                />
+                                <Chip
+                                    label={article.status?.label}
+                                    size="small"
+                                    sx={{ bgcolor: '#10b981', color: '#fff' }}
+                                />
+                            </Box>
                         </Box>
 
                         <Divider sx={{ backgroundColor: '#334155', mb: 3 }} />
@@ -313,11 +289,11 @@ const StudentShowArticle = ({ article, isFavorite: initialFavorite = false }) =>
                                 variant="contained"
                                 size="large"
                                 startIcon={<ArrowBack />}
-                                onClick={() => router.get('/student/dashboard')}
+                                onClick={() => router.get('/writer/dashboard')}
                                 sx={{ 
                                     px: 4,
-                                    bgcolor: '#10b981',
-                                    '&:hover': { bgcolor: '#059669' }
+                                    bgcolor: '#f59e0b',
+                                    '&:hover': { bgcolor: '#d97706' }
                                 }}
                             >
                                 Back to Dashboard
@@ -458,4 +434,4 @@ const StudentShowArticle = ({ article, isFavorite: initialFavorite = false }) =>
     );
 };
 
-export default StudentShowArticle;
+export default WriterViewArticle;

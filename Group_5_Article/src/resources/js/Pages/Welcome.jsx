@@ -1,349 +1,293 @@
-import React, { useState } from 'react';
-import { Head, Link } from '@inertiajs/react';
+import React, { useMemo, useState } from 'react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
     Container,
     Typography,
     Box,
     Button,
-    Paper,
     Grid,
     Card,
-    CardContent,
     Avatar,
     Fade,
-    Slide,
-    AppBar,
-    Toolbar,
-    IconButton,
     Chip,
-    Stepper,
-    Step,
-    StepLabel,
-    useTheme
+    Stack,
+    CssBaseline,
+    IconButton,
+    Tooltip,
+    Divider
 } from '@mui/material';
-import {
-    Article,
-    Edit,
-    Visibility,
-    School,
-    Person,
-    Menu,
-    ArrowForward,
-    CheckCircle,
-    Timeline,
-    Group,
-    TrendingUp
-} from '@mui/icons-material';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { Edit, Visibility, School, WbSunny, ArrowBack } from '@mui/icons-material';
 
 export default function Welcome({ auth, laravelVersion, phpVersion }) {
-    const theme = useTheme();
-    const [activeStep, setActiveStep] = useState(0);
+    const [themeMode, setThemeMode] = useState('light');
+
+    // Toggle theme
+    const cycleTheme = () => {
+        setThemeMode(prev => prev === 'light' ? 'dark' : 'light');
+    };
+
+    // Navigate to appropriate dashboard
+    const goToDashboard = () => {
+        if (auth.user) {
+            switch(auth.user.role) {
+                case 'writer':
+                    router.visit('/writer/dashboard');
+                    break;
+                case 'editor':
+                    router.visit('/editor/dashboard');
+                    break;
+                case 'student':
+                    router.visit('/student/dashboard');
+                    break;
+                default:
+                    router.visit('/login');
+            }
+        } else {
+            router.visit('/login');
+        }
+    };
+
+    // Handle feature card clicks
+    const handleFeatureClick = (feature) => {
+        if (!auth.user) {
+            router.visit('/login');
+            return;
+        }
+
+        switch(feature) {
+            case 'writer':
+                if (auth.user.role === 'writer') {
+                    router.visit('/writer/dashboard');
+                } else {
+                    router.visit('/login');
+                }
+                break;
+            case 'editor':
+                if (auth.user.role === 'editor') {
+                    router.visit('/editor/dashboard');
+                } else {
+                    router.visit('/login');
+                }
+                break;
+            case 'student':
+                if (auth.user.role === 'student') {
+                    router.visit('/student/dashboard');
+                } else {
+                    router.visit('/login');
+                }
+                break;
+            default:
+                router.visit('/login');
+        }
+    };
+
+    // Theme configuration
+    const theme = useMemo(() => {
+        if (themeMode === 'dark') {
+            return createTheme({
+                palette: {
+                    mode: 'dark',
+                    background: { default: '#0d1b2a', paper: '#1b2a41' },
+                    primary: { main: '#f87171' },   // light red
+                    secondary: { main: '#60a5fa' }, // light blue
+                    text: { primary: '#ffffff' }
+                },
+                typography: { fontFamily: '"Times New Roman", Times, serif' }
+            });
+        }
+
+        return createTheme({
+            palette: {
+                mode: 'light',
+                background: { default: '#e0f2fe', paper: '#ffffff' }, // light blue background
+                primary: { main: '#1e3a8a' },   // dark blue
+                secondary: { main: '#f87171' }, // light red
+                text: { primary: '#000000' }
+            },
+            typography: { fontFamily: '"Times New Roman", Times, serif' }
+        });
+    }, [themeMode]);
 
     const features = [
         {
             icon: <Edit />,
             title: 'Writer Dashboard',
-            description: 'Create, edit, and submit articles with our intuitive rich text editor.',
-            color: '#1976d2'
+            description: 'Write with a rich text editor, save drafts, and submit for review.',
+            detail: 'Manage drafts, submitted articles, and revisions.',
+            tags: ['Drafts', 'Submit', 'Revise']
         },
         {
             icon: <Visibility />,
             title: 'Editor Review',
-            description: 'Editors can review, request revisions, and publish articles seamlessly.',
-            color: '#ed6c02'
+            description: 'Review submissions, request revisions, and publish articles.',
+            detail: 'Provide feedback and communicate directly with writers.',
+            tags: ['Review', 'Feedback', 'Publish']
         },
         {
             icon: <School />,
             title: 'Student Engagement',
-            description: 'Students can read published articles and engage through comments.',
-            color: '#2e7d32'
+            description: 'Students read published articles and participate in comments.',
+            detail: 'Keep campus readers informed with a clean interface.',
+            tags: ['Read', 'Comment', 'Discover']
         }
     ];
 
-    const workflow = [
-        'Draft Article',
-        'Submit for Review',
-        'Editor Review',
-        'Publish'
-    ];
-
-    const stats = [
-        { label: 'Articles Published', value: '1000+' },
-        { label: 'Active Writers', value: '50+' },
-        { label: 'Student Readers', value: '500+' },
-        { label: 'Editor Reviews', value: '200+' }
-    ];
-
     return (
-        <>
+        <ThemeProvider theme={theme}>
+            <CssBaseline />
             <Head title="Student Article Publication Platform" />
-            <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-                {/* Hero Section */}
-                <Box sx={{
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    minHeight: '100vh',
-                    display: 'flex',
-                    alignItems: 'center',
-                    position: 'relative',
-                    overflow: 'hidden'
-                }}>
-                    <Container maxWidth="lg">
-                        <Grid container spacing={4} alignItems="center">
-                            <Grid item xs={12} md={6}>
-                                <Fade in={true} timeout={1000}>
-                                    <Box sx={{ color: 'white' }}>
-                                        <Typography variant="h2" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>
-                                            Student Article Publication Platform
-                                        </Typography>
-                                        <Typography variant="h5" sx={{ mb: 4, opacity: 0.9 }}>
-                                            Connect writers, editors, and students in a collaborative publishing environment
-                                        </Typography>
-                                        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                                            {auth.user ? (
-                                                <>
-                                                    {(() => {
-                                                        const userRoles = auth.user.roles || [];
-                                                        console.log('User roles:', userRoles);
-                                                        console.log('Auth user:', auth.user);
-                                                        
-                                                        let dashboardUrl = '/writer/dashboard';
-                                                        let dashboardText = 'Go to Writer Dashboard';
-                                                        
-                                                        if (userRoles.includes('student')) {
-                                                            dashboardUrl = '/student/dashboard';
-                                                            dashboardText = 'Go to Student Dashboard';
-                                                        } else if (userRoles.includes('editor')) {
-                                                            dashboardUrl = '/editor/dashboard';
-                                                            dashboardText = 'Go to Editor Dashboard';
-                                                        } else if (userRoles.includes('admin')) {
-                                                            dashboardUrl = '/writer/dashboard';
-                                                            dashboardText = 'Go to Admin Dashboard';
-                                                        }
-                                                        
-                                                        return (
-                                                            <>
-                                                                <Button
-                                                                    variant="contained"
-                                                                    size="large"
-                                                                    component={Link}
-                                                                    href="/writer-dashboard-test"
-                                                                    sx={{
-                                                                        bgcolor: 'white',
-                                                                        color: '#667eea',
-                                                                        '&:hover': { bgcolor: 'grey.100' }
-                                                                    }}
-                                                                >
-                                                                    Dashboard
-                                                                </Button>
-                                                                <Button
-                                                                    variant="text"
-                                                                    size="small"
-                                                                    component={Link}
-                                                                    href="/debug-roles"
-                                                                    sx={{
-                                                                        color: 'white',
-                                                                        textDecoration: 'underline'
-                                                                    }}
-                                                                >
-                                                                    Debug Roles
-                                                                </Button>
-                                                            </>
-                                                        );
-                                                    })()}
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Button
-                                                        variant="contained"
-                                                        size="large"
-                                                        component={Link}
-                                                        href={route('login')}
-                                                        sx={{
-                                                            bgcolor: 'white',
-                                                            color: '#667eea',
-                                                            '&:hover': { bgcolor: 'grey.100' }
-                                                        }}
-                                                    >
-                                                        Sign In
-                                                    </Button>
-                                                    <Button
-                                                        variant="outlined"
-                                                        size="large"
-                                                        component={Link}
-                                                        href={route('register')}
-                                                        sx={{
-                                                            borderColor: 'white',
-                                                            color: 'white',
-                                                            '&:hover': { 
-                                                                borderColor: 'white',
-                                                                bgcolor: 'rgba(255,255,255,0.1)'
-                                                            }
-                                                        }}
-                                                    >
-                                                        Register
-                                                    </Button>
-                                                </>
-                                            )}
-                                        </Box>
-                                    </Box>
-                                </Fade>
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                                <Slide direction="left" in={true} timeout={1000}>
-                                    <Box sx={{ textAlign: 'center' }}>
-                                        <Avatar sx={{ 
-                                            width: 200, 
-                                            height: 200, 
-                                            bgcolor: 'white', 
-                                            mx: 'auto',
-                                            boxShadow: '0 20px 40px rgba(0,0,0,0.2)'
-                                        }}>
-                                            <Article sx={{ fontSize: 100, color: '#667eea' }} />
+
+            {/* Theme Switcher */}
+            <Box sx={{ position: 'fixed', top: 12, left: 12, zIndex: 1300 }}>
+                <Tooltip title="Toggle dark/light mode">
+                    <IconButton
+                        onClick={cycleTheme}
+                        sx={{
+                            bgcolor: 'background.paper',
+                            border: '1px solid rgba(127,127,127,0.22)',
+                            boxShadow: '0 10px 30px rgba(0,0,0,0.12)',
+                            '&:hover': { bgcolor: 'background.paper' }
+                        }}
+                    >
+                        <WbSunny sx={{ color: theme.palette.secondary.main }} />
+                    </IconButton>
+                </Tooltip>
+            </Box>
+
+            {/* Dashboard Navigation */}
+            {auth.user && (
+                <Box sx={{ position: 'fixed', top: 12, right: 12, zIndex: 1300 }}>
+                    <Tooltip title="Go to Dashboard">
+                        <IconButton
+                            onClick={goToDashboard}
+                            sx={{
+                                bgcolor: 'background.paper',
+                                border: '1px solid rgba(127,127,127,0.22)',
+                                boxShadow: '0 10px 30px rgba(0,0,0,0.12)',
+                                '&:hover': { bgcolor: 'background.paper' }
+                            }}
+                        >
+                            <ArrowBack sx={{ color: theme.palette.primary.main }} />
+                        </IconButton>
+                    </Tooltip>
+                </Box>
+            )}
+
+            {/* Hero Section */}
+            <Box sx={{
+                minHeight: '100vh',
+                background: themeMode === 'dark'
+                    ? 'linear-gradient(135deg,#1b2a41,#0d1b2a)'
+                    : 'linear-gradient(135deg,#e0f2fe,#ffffff)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+            }}>
+                <Container maxWidth="lg" sx={{ textAlign: 'center' }}>
+                    <Stack spacing={2} alignItems="center">
+                        <Typography variant="h3" sx={{ fontWeight: 900, color: theme.palette.text.primary }}>
+                            Student Article Publication Platform
+                        </Typography>
+                        <Typography variant="h6" sx={{ maxWidth: 720, color: theme.palette.text.primary }}>
+                            A modern campus publication workflow for writers, editors, and students.
+                        </Typography>
+
+                        {!auth.user && (
+                            <Stack direction="row" spacing={2} sx={{ mt: 3 }}>
+                                <Button
+                                    variant="contained"
+                                    component={Link}
+                                    href={route('login')}
+                                    sx={{ fontWeight: 800, px: 4, py: 2 }}
+                                >
+                                    Sign In
+                                </Button>
+                                <Button
+                                    variant="outlined"
+                                    component={Link}
+                                    href={route('register')}
+                                    sx={{ fontWeight: 800, px: 4, py: 2, borderColor: theme.palette.primary.main, color: theme.palette.primary.main }}
+                                >
+                                    Register
+                                </Button>
+                            </Stack>
+                        )}
+
+                        {auth.user && (
+                            <Stack direction="row" spacing={2} sx={{ mt: 3 }}>
+                                <Button
+                                    variant="contained"
+                                    onClick={goToDashboard}
+                                    sx={{ fontWeight: 800, px: 4, py: 2 }}
+                                >
+                                    Go to Dashboard
+                                </Button>
+                            </Stack>
+                        )}
+                    </Stack>
+                </Container>
+            </Box>
+
+            {/* Features Section */}
+            <Box sx={{ py: 8, bgcolor: theme.palette.background.default }}>
+                <Container maxWidth="lg">
+                    <Typography variant="h3" textAlign="center" gutterBottom sx={{ fontWeight: 'bold', mb: 6, color: theme.palette.text.primary }}>
+                        Platform Features
+                    </Typography>
+                    <Grid container spacing={4} justifyContent="center">
+                        {features.map((feature, idx) => (
+                            <Grid item xs={12} sm={4} key={idx}>
+                                <Fade in={true} timeout={1000 + idx * 300}>
+                                    <Card sx={{
+                                        p: 3,
+                                        textAlign: 'center',
+                                        bgcolor: theme.palette.background.paper,
+                                        borderRadius: 3,
+                                        boxShadow: '0 12px 24px rgba(0,0,0,0.1)',
+                                        '&:hover': { 
+                                            transform: 'translateY(-8px)', 
+                                            transition: '0.3s',
+                                            cursor: 'pointer',
+                                            boxShadow: '0 16px 32px rgba(0,0,0,0.15)'
+                                        }
+                                    }}
+                                    onClick={() => handleFeatureClick(feature.title.toLowerCase().split(' ')[0])}
+                                    >
+                                        <Avatar sx={{ width: 50, height: 50, bgcolor: theme.palette.primary.main, mx: 'auto', mb: 2 }}>
+                                            {feature.icon}
                                         </Avatar>
-                                    </Box>
-                                </Slide>
-                            </Grid>
-                        </Grid>
-                    </Container>
-                </Box>
-
-                {/* Features Section */}
-                <Box sx={{ py: 8, bgcolor: 'grey.50' }}>
-                    <Container maxWidth="lg">
-                        <Typography variant="h3" textAlign="center" gutterBottom sx={{ fontWeight: 'bold', mb: 6 }}>
-                            Platform Features
-                        </Typography>
-                        <Grid container spacing={4}>
-                            {features.map((feature, index) => (
-                                <Grid item xs={12} md={4} key={index}>
-                                    <Fade in={true} timeout={1000 + index * 200}>
-                                        <Card sx={{ 
-                                            height: '100%', 
-                                            textAlign: 'center',
-                                            p: 3,
-                                            transition: 'transform 0.3s',
-                                            '&:hover': { transform: 'translateY(-10px)' }
-                                        }}>
-                                            <Avatar sx={{ 
-                                                width: 80, 
-                                                height: 80, 
-                                                bgcolor: feature.color, 
-                                                mx: 'auto', 
-                                                mb: 2 
-                                            }}>
-                                                {feature.icon}
-                                            </Avatar>
-                                            <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
-                                                {feature.title}
-                                            </Typography>
-                                            <Typography variant="body2" color="text.secondary">
-                                                {feature.description}
-                                            </Typography>
-                                        </Card>
-                                    </Fade>
-                                </Grid>
-                            ))}
-                        </Grid>
-                    </Container>
-                </Box>
-
-                {/* Workflow Section */}
-                <Box sx={{ py: 8, bgcolor: 'white' }}>
-                    <Container maxWidth="lg">
-                        <Typography variant="h3" textAlign="center" gutterBottom sx={{ fontWeight: 'bold', mb: 6 }}>
-                            Article Lifecycle
-                        </Typography>
-                        <Stepper activeStep={activeStep} alternativeLabel>
-                            {workflow.map((label, index) => (
-                                <Step key={label}>
-                                    <StepLabel>{label}</StepLabel>
-                                </Step>
-                            ))}
-                        </Stepper>
-                        <Box sx={{ mt: 4, textAlign: 'center' }}>
-                            <Button
-                                variant="contained"
-                                onClick={() => setActiveStep((prev) => (prev + 1) % workflow.length)}
-                                sx={{ mt: 2 }}
-                            >
-                                Next Step
-                            </Button>
-                        </Box>
-                    </Container>
-                </Box>
-
-                {/* Stats Section */}
-                <Box sx={{ py: 8, bgcolor: 'grey.50' }}>
-                    <Container maxWidth="lg">
-                        <Typography variant="h3" textAlign="center" gutterBottom sx={{ fontWeight: 'bold', mb: 6 }}>
-                            Platform Statistics
-                        </Typography>
-                        <Grid container spacing={4}>
-                            {stats.map((stat, index) => (
-                                <Grid item xs={12} sm={6} md={3} key={index}>
-                                    <Paper sx={{ p: 3, textAlign: 'center' }}>
-                                        <Typography variant="h3" color="primary" fontWeight="bold">
-                                            {stat.value}
+                                        <Typography variant="h6" sx={{ fontWeight: 900 }}>{feature.title}</Typography>
+                                        <Typography variant="body2" color="text.secondary" sx={{ my: 1 }}>
+                                            {feature.description}
                                         </Typography>
-                                        <Typography variant="body2" color="text.secondary">
-                                            {stat.label}
-                                        </Typography>
-                                    </Paper>
-                                </Grid>
-                            ))}
-                        </Grid>
-                    </Container>
-                </Box>
-
-                {/* Demo Accounts Section */}
-                <Box sx={{ py: 8, bgcolor: 'white' }}>
-                    <Container maxWidth="md">
-                        <Typography variant="h3" textAlign="center" gutterBottom sx={{ fontWeight: 'bold', mb: 2 }}>
-                            Try Demo Accounts
-                        </Typography>
-                        <Typography variant="body1" textAlign="center" color="text.secondary" sx={{ mb: 4 }}>
-                            Use these accounts to explore different roles in the platform
-                        </Typography>
-                        <Grid container spacing={3}>
-                            {[
-                                { role: 'Writer', email: 'writer@example.com', icon: <Edit /> },
-                                { role: 'Editor', email: 'editor@example.com', icon: <Visibility /> },
-                                { role: 'Student', email: 'student@example.com', icon: <School /> },
-                                { role: 'Admin', email: 'admin@example.com', icon: <Person /> }
-                            ].map((account, index) => (
-                                <Grid item xs={12} sm={6} md={3} key={index}>
-                                    <Card sx={{ textAlign: 'center', p: 2 }}>
-                                        <Avatar sx={{ bgcolor: 'primary.main', mx: 'auto', mb: 1 }}>
-                                            {account.icon}
-                                        </Avatar>
-                                        <Typography variant="subtitle2" fontWeight="bold">
-                                            {account.role}
-                                        </Typography>
-                                        <Typography variant="caption" color="text.secondary">
-                                            {account.email}
-                                        </Typography>
-                                        <Typography variant="caption" display="block">
-                                            Password: password
+                                        <Stack direction="row" spacing={1} justifyContent="center" flexWrap="wrap" sx={{ mb: 1 }}>
+                                            {feature.tags.map(tag => <Chip key={tag} label={tag} size="small" variant="outlined" />)}
+                                        </Stack>
+                                        <Divider sx={{ my: 1 }} />
+                                        <Typography variant="body2" color="text.secondary">{feature.detail}</Typography>
+                                        <Typography variant="caption" sx={{ mt: 2, display: 'block', color: theme.palette.primary.main, fontWeight: 'bold' }}>
+                                            Click to explore {feature.title.toLowerCase()}
                                         </Typography>
                                     </Card>
-                                </Grid>
-                            ))}
-                        </Grid>
-                    </Container>
-                </Box>
-
-                {/* Footer */}
-                <Box sx={{ py: 4, bgcolor: 'grey.900', color: 'white' }}>
-                    <Container maxWidth="lg">
-                        <Typography variant="body2" textAlign="center">
-                            Student Article Publication Platform - Built with Laravel, React, and Material-UI
-                        </Typography>
-                        <Typography variant="caption" display="block" textAlign="center" sx={{ mt: 1, opacity: 0.7 }}>
-                            Laravel v{laravelVersion} (PHP v{phpVersion})
-                        </Typography>
-                    </Container>
-                </Box>
+                                </Fade>
+                            </Grid>
+                        ))}
+                    </Grid>
+                </Container>
             </Box>
-        </>
+
+            {/* Footer */}
+            <Box sx={{ py: 4, bgcolor: themeMode === 'dark' ? '#050a14' : 'grey.900', color: 'white' }}>
+                <Container maxWidth="lg">
+                    <Typography variant="body2" textAlign="center">
+                        Student Article Publication Platform - Built with Laravel, React, and Material-UI
+                    </Typography>
+                    <Typography variant="caption" display="block" textAlign="center" sx={{ mt: 1, opacity: 0.7 }}>
+                        Laravel v{laravelVersion} (PHP v{phpVersion})
+                    </Typography>
+                </Container>
+            </Box>
+        </ThemeProvider>
     );
 }

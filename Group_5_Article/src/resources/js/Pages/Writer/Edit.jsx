@@ -15,8 +15,6 @@ import {
     Chip,
     Divider,
     Alert,
-    AppBar,
-    Toolbar,
     Dialog,
     DialogTitle,
     DialogContent,
@@ -24,18 +22,51 @@ import {
     List,
     ListItem,
     ListItemText,
-    CircularProgress
+    CircularProgress,
+    Menu,
+    MenuItem as MuiMenuItem,
+    ListItemIcon,
+    IconButton
 } from '@mui/material';
-import { ArrowBack, Save, Send, Category } from '@mui/icons-material';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { 
+    ArrowBack, 
+    Save, 
+    Send, 
+    Category,
+    Menu as MenuIcon,
+    Person,
+    Logout,
+    Edit,
+    Visibility
+} from '@mui/icons-material';
 import JoditEditorComponent from '@/Components/JoditEditor';
 
 const WriterEdit = ({ article, categories }) => {
-    const { flash } = usePage().props;
+    const { flash, auth } = usePage().props;
 
     const [formData, setFormData] = useState({
         title: article?.title || '',
         content: article?.content || '',
         category_id: article?.category_id || article?.category?.id || ''
+    });
+
+    const [anchorEl, setAnchorEl] = useState(null);
+    const [chatOpen, setChatOpen] = useState(false);
+    const [chatLoading, setChatLoading] = useState(false);
+    const [chatMessages, setChatMessages] = useState([]);
+    const [chatText, setChatText] = useState('');
+
+    // Theme from Login.jsx - same as Dashboard
+    const theme = createTheme({
+        palette: {
+            mode: "dark",
+            background: { default: "#0b1220", paper: "#0f172a" },
+            primary: { main: "#60a5fa" },
+            secondary: { main: "#22d3ee" },
+            text: { primary: "#ffffff" }
+        },
+        typography: { fontFamily: '"Times New Roman", Times, serif' }
     });
 
     const handleInputChange = (field, value) => {
@@ -56,10 +87,21 @@ const WriterEdit = ({ article, categories }) => {
 
     const isNeedsRevision = article?.status?.name === 'needs_revision';
 
-    const [chatOpen, setChatOpen] = useState(false);
-    const [chatLoading, setChatLoading] = useState(false);
-    const [chatMessages, setChatMessages] = useState([]);
-    const [chatText, setChatText] = useState('');
+    const handleMenuOpen = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleMenuClose = () => {
+        setAnchorEl(null);
+    };
+
+    const handleLogout = () => {
+        router.post('/logout', {}, {
+            onFinish: () => {
+                handleMenuClose();
+            }
+        });
+    };
 
     const csrfToken = useMemo(() => {
         const el = document.querySelector('meta[name="csrf-token"]');
@@ -117,30 +159,95 @@ const WriterEdit = ({ article, categories }) => {
     })();
 
     return (
-        <>
+        <ThemeProvider theme={theme}>
             <Head title={`Edit: ${article?.title ?? 'Article'}`} />
-            <AppBar position="sticky" sx={{ backgroundColor: '#1565c0' }}>
-                <Toolbar>
-                    <Button
-                        color="inherit"
-                        startIcon={<ArrowBack />}
-                        component={Link}
-                        href={route('writer.dashboard')}
-                        sx={{ mr: 2, textTransform: 'none' }}
-                    >
-                        Back to Writer Dashboard
-                    </Button>
-                    <Typography variant="h6" sx={{ flexGrow: 1 }}>
-                        Writer - Edit Article
-                    </Typography>
-                    <Chip label="Writer" color="secondary" size="small" />
-                </Toolbar>
-            </AppBar>
-            <Container maxWidth="lg">
-                <Box sx={{ py: 4 }}>
+            
+            <Box sx={{ 
+                minHeight: "100vh", 
+                backgroundColor: "#0b1220",
+                display: 'flex',
+                flexDirection: 'column'
+            }}>
+                {/* Header - Same as Dashboard */}
+                <Box sx={{ 
+                    backgroundColor: '#0f172a', 
+                    borderBottom: '1px solid #334155',
+                    p: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <IconButton 
+                            onClick={() => router.get('/writer/dashboard')}
+                            sx={{ color: '#ffffff' }}
+                        >
+                            <ArrowBack />
+                        </IconButton>
+                        <Typography variant="h4" sx={{ color: '#ffffff', fontWeight: 'bold' }}>
+                            Edit Article
+                        </Typography>
+                    </Box>
+                    
+                    <IconButton color="inherit" onClick={handleMenuOpen} sx={{ color: '#ffffff' }}>
+                        <MenuIcon />
+                    </IconButton>
+                </Box>
+
+                {/* Menu - Same as Dashboard */}
+                <Menu
+                    anchorEl={anchorEl}
+                    open={Boolean(anchorEl)}
+                    onClose={handleMenuClose}
+                    PaperProps={{
+                        sx: {
+                            backgroundColor: '#1e293b',
+                            color: '#ffffff',
+                            border: '1px solid #334155'
+                        }
+                    }}
+                >
+                    <MuiMenuItem onClick={handleMenuClose}>
+                        <ListItemIcon>
+                            <Person sx={{ color: '#60a5fa' }} />
+                        </ListItemIcon>
+                        Profile
+                    </MuiMenuItem>
+                    
+                    <Divider sx={{ backgroundColor: '#334155' }} />
+                    <MuiMenuItem onClick={() => { router.get('/writer/dashboard'); handleMenuClose(); }}>
+                        <ListItemIcon>
+                            <Edit sx={{ color: '#f59e0b' }} />
+                        </ListItemIcon>
+                        Switch to Writer
+                    </MuiMenuItem>
+                    <MuiMenuItem onClick={() => { router.get('/editor/dashboard'); handleMenuClose(); }}>
+                        <ListItemIcon>
+                            <Category sx={{ color: '#ef4444' }} />
+                        </ListItemIcon>
+                        Switch to Editor
+                    </MuiMenuItem>
+                    <MuiMenuItem onClick={() => { router.get('/student/dashboard'); handleMenuClose(); }}>
+                        <ListItemIcon>
+                            <Visibility sx={{ color: '#10b981' }} />
+                        </ListItemIcon>
+                        Switch to Student
+                    </MuiMenuItem>
+                    
+                    <Divider sx={{ backgroundColor: '#334155' }} />
+                    <MuiMenuItem onClick={handleLogout}>
+                        <ListItemIcon>
+                            <Logout sx={{ color: '#f59e0b' }} />
+                        </ListItemIcon>
+                        Logout
+                    </MuiMenuItem>
+                </Menu>
+
+                {/* Main Content */}
+                <Box sx={{ flexGrow: 1, p: 3 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
                         <Box>
-                            <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+                            <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#f59e0b' }}>
                                 Edit Article
                             </Typography>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
@@ -148,49 +255,74 @@ const WriterEdit = ({ article, categories }) => {
                                     size="small"
                                     icon={<Category />}
                                     label={article?.category?.name || 'Uncategorized'}
-                                    variant="outlined"
+                                    sx={{ bgcolor: '#0f172a', color: '#f59e0b', border: '1px solid #f59e0b' }}
                                 />
                                 <Chip
                                     size="small"
                                     label={article?.status?.label || article?.status?.name || 'Status'}
-                                    color={isNeedsRevision ? 'error' : 'default'}
+                                    sx={{ bgcolor: isNeedsRevision ? '#ef4444' : '#94a3b8', color: '#fff' }}
                                 />
                             </Box>
                         </Box>
 
                         <Box sx={{ display: 'flex', gap: 1 }}>
-                            <Button variant="outlined" onClick={() => setChatOpen(true)}>
+                            <Button 
+                                onClick={() => setChatOpen(true)}
+                                sx={{ 
+                                    color: '#60a5fa',
+                                    borderColor: '#60a5fa',
+                                    '&:hover': { borderColor: '#3b82f6', color: '#3b82f6' }
+                                }}
+                            >
                                 Open Chat
                             </Button>
                             <Button
-                                component={Link}
-                                href={route('writer.dashboard')}
+                                onClick={() => router.get('/writer/dashboard')}
                                 startIcon={<ArrowBack />}
-                                variant="outlined"
+                                sx={{ 
+                                    color: '#94a3b8',
+                                    borderColor: '#334155',
+                                    '&:hover': { borderColor: '#60a5fa', color: '#60a5fa' }
+                                }}
                             >
                                 Back to Dashboard
                             </Button>
                         </Box>
                     </Box>
 
+                    {/* Flash Messages */}
                     {(flash?.success || flash?.error) && (
-                        <Alert severity={flash?.success ? 'success' : 'error'} sx={{ mb: 3 }}>
-                            {flash?.success || flash?.error}
-                        </Alert>
+                        <Box sx={{ mb: 3 }}>
+                            <Paper sx={{ 
+                                p: 2, 
+                                backgroundColor: flash?.success ? '#10b981' : '#ef4444', 
+                                color: '#fff'
+                            }}>
+                                <Typography>{flash?.success || flash?.error}</Typography>
+                            </Paper>
+                        </Box>
                     )}
 
+                    {/* Editor Feedback */}
                     {isNeedsRevision && latestRevisionComment && (
-                        <Paper sx={{ p: 3, mb: 3, borderLeft: '4px solid', borderLeftColor: 'error.main' }}>
-                            <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 1 }}>
+                        <Paper sx={{ 
+                            p: 3, 
+                            mb: 3, 
+                            backgroundColor: '#1e293b',
+                            border: '1px solid #334155',
+                            borderLeft: '4px solid #ef4444'
+                        }}>
+                            <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 1, color: '#ef4444' }}>
                                 Editor Feedback
                             </Typography>
-                            <Typography variant="body1" color="text.secondary">
+                            <Typography variant="body1" sx={{ color: '#94a3b8' }}>
                                 {latestRevisionComment}
                             </Typography>
                         </Paper>
                     )}
 
-                    <Paper sx={{ p: 4 }}>
+                    {/* Edit Form */}
+                    <Paper sx={{ p: 4, backgroundColor: '#1e293b', border: '1px solid #334155' }}>
                         <Grid container spacing={3}>
                             <Grid item xs={12} md={8}>
                                 <TextField
@@ -199,15 +331,48 @@ const WriterEdit = ({ article, categories }) => {
                                     value={formData.title}
                                     onChange={(e) => handleInputChange('title', e.target.value)}
                                     required
+                                    sx={{ 
+                                        '& .MuiOutlinedInput-root': {
+                                            '& fieldset': {
+                                                borderColor: '#334155',
+                                            },
+                                            '&:hover fieldset': {
+                                                borderColor: '#60a5fa',
+                                            },
+                                            '&.Mui-focused fieldset': {
+                                                borderColor: '#60a5fa',
+                                            },
+                                        },
+                                        '& .MuiInputLabel-root': {
+                                            color: '#94a3b8',
+                                        },
+                                        '& .MuiInputLabel-focused': {
+                                            color: '#60a5fa',
+                                        }
+                                    }}
                                 />
                             </Grid>
                             <Grid item xs={12} md={4}>
                                 <FormControl fullWidth required>
-                                    <InputLabel>Category</InputLabel>
+                                    <InputLabel sx={{ color: '#94a3b8' }}>Category</InputLabel>
                                     <Select
                                         value={formData.category_id}
                                         label="Category"
                                         onChange={(e) => handleInputChange('category_id', e.target.value)}
+                                        sx={{ 
+                                            '& .MuiOutlinedInput-notchedOutline': {
+                                                borderColor: '#334155',
+                                            },
+                                            '&:hover .MuiOutlinedInput-notchedOutline': {
+                                                borderColor: '#60a5fa',
+                                            },
+                                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                                borderColor: '#60a5fa',
+                                            },
+                                            '& .MuiSvgIcon-root': {
+                                                color: '#94a3b8',
+                                            }
+                                        }}
                                     >
                                         {categories.map((category) => (
                                             <MenuItem key={category.id} value={category.id}>
@@ -219,15 +384,23 @@ const WriterEdit = ({ article, categories }) => {
                             </Grid>
 
                             <Grid item xs={12}>
-                                <Divider sx={{ mb: 2 }} />
-                                <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1 }}>
+                                <Divider sx={{ backgroundColor: '#334155', mb: 2 }} />
+                                <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, color: '#ffffff' }}>
                                     Content
                                 </Typography>
-                                <JoditEditorComponent
-                                    value={formData.content}
-                                    onChange={handleContentChange}
-                                    placeholder="Write your article content here..."
-                                />
+                                <Box sx={{ 
+                                    border: '1px solid #334155',
+                                    borderRadius: 1,
+                                    '& .jodit-container': {
+                                        backgroundColor: '#0f172a !important',
+                                    }
+                                }}>
+                                    <JoditEditorComponent
+                                        value={formData.content}
+                                        onChange={handleContentChange}
+                                        placeholder="Write your article content here..."
+                                    />
+                                </Box>
                             </Grid>
 
                             <Grid item xs={12}>
@@ -237,6 +410,10 @@ const WriterEdit = ({ article, categories }) => {
                                             variant="contained"
                                             startIcon={<Save />}
                                             onClick={handleSaveDraft}
+                                            sx={{ 
+                                                bgcolor: '#60a5fa',
+                                                '&:hover': { bgcolor: '#3b82f6' }
+                                            }}
                                         >
                                             Save Changes
                                         </Button>
@@ -245,9 +422,12 @@ const WriterEdit = ({ article, categories }) => {
                                     {isNeedsRevision && (
                                         <Button
                                             variant="contained"
-                                            color="error"
                                             startIcon={<Send />}
                                             onClick={handleResubmitRevision}
+                                            sx={{ 
+                                                bgcolor: '#ef4444',
+                                                '&:hover': { bgcolor: '#dc2626' }
+                                            }}
                                         >
                                             Revise & Resubmit
                                         </Button>
@@ -257,53 +437,88 @@ const WriterEdit = ({ article, categories }) => {
                         </Grid>
                     </Paper>
                 </Box>
-            </Container>
 
-            <Dialog open={chatOpen} onClose={() => setChatOpen(false)} maxWidth="sm" fullWidth>
-                <DialogTitle>Article Discussion</DialogTitle>
-                <DialogContent>
-                    <Box sx={{ minHeight: 260, maxHeight: 360, overflowY: 'auto', mb: 2 }}>
-                        {chatLoading && (
-                            <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
-                                <CircularProgress size={24} />
-                            </Box>
-                        )}
-                        {!chatLoading && chatMessages.length === 0 && (
-                            <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
-                                No messages yet. Start the conversation.
-                            </Typography>
-                        )}
-                        {!chatLoading && chatMessages.length > 0 && (
-                            <List dense>
-                                {chatMessages.map((m) => (
-                                    <ListItem key={m.id} alignItems="flex-start" disableGutters>
-                                        <ListItemText
-                                            primary={m.sender?.name || 'User'}
-                                            secondary={m.message}
-                                        />
-                                    </ListItem>
-                                ))}
-                            </List>
-                        )}
-                    </Box>
+                {/* Chat Dialog */}
+                <Dialog open={chatOpen} onClose={() => setChatOpen(false)} maxWidth="sm" fullWidth>
+                    <DialogTitle sx={{ backgroundColor: '#1e293b', color: '#ffffff' }}>
+                        Article Discussion
+                    </DialogTitle>
+                    <DialogContent sx={{ backgroundColor: '#1e293b', color: '#ffffff' }}>
+                        <Box sx={{ minHeight: 260, maxHeight: 360, overflowY: 'auto', mb: 2 }}>
+                            {chatLoading && (
+                                <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+                                    <CircularProgress size={24} sx={{ color: '#60a5fa' }} />
+                                </Box>
+                            )}
+                            {!chatLoading && chatMessages.length === 0 && (
+                                <Typography variant="body2" sx={{ color: '#94a3b8', py: 2 }}>
+                                    No messages yet. Start the conversation.
+                                </Typography>
+                            )}
+                            {!chatLoading && chatMessages.length > 0 && (
+                                <List dense>
+                                    {chatMessages.map((m) => (
+                                        <ListItem key={m.id} alignItems="flex-start" disableGutters>
+                                            <ListItemText
+                                                primary={m.sender?.name || 'User'}
+                                                primaryTypographyProps={{ color: '#ffffff' }}
+                                                secondary={m.message}
+                                                secondaryTypographyProps={{ color: '#94a3b8' }}
+                                            />
+                                        </ListItem>
+                                    ))}
+                                </List>
+                            )}
+                        </Box>
 
-                    <TextField
-                        fullWidth
-                        multiline
-                        minRows={2}
-                        label="Message"
-                        value={chatText}
-                        onChange={(e) => setChatText(e.target.value)}
-                    />
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setChatOpen(false)}>Close</Button>
-                    <Button onClick={sendChat} variant="contained" disabled={chatLoading || !chatText.trim()}>
-                        Send
-                    </Button>
-                </DialogActions>
-            </Dialog>
-        </>
+                        <TextField
+                            fullWidth
+                            multiline
+                            minRows={2}
+                            label="Message"
+                            value={chatText}
+                            onChange={(e) => setChatText(e.target.value)}
+                            sx={{ 
+                                '& .MuiOutlinedInput-root': {
+                                    '& fieldset': {
+                                        borderColor: '#334155',
+                                    },
+                                    '&:hover fieldset': {
+                                        borderColor: '#60a5fa',
+                                    },
+                                    '&.Mui-focused fieldset': {
+                                        borderColor: '#60a5fa',
+                                    },
+                                },
+                                '& .MuiInputLabel-root': {
+                                    color: '#94a3b8',
+                                },
+                                '& .MuiInputLabel-focused': {
+                                    color: '#60a5fa',
+                                }
+                            }}
+                        />
+                    </DialogContent>
+                    <DialogActions sx={{ backgroundColor: '#1e293b' }}>
+                        <Button onClick={() => setChatOpen(false)} sx={{ color: '#94a3b8' }}>
+                            Close
+                        </Button>
+                        <Button 
+                            onClick={sendChat} 
+                            variant="contained"
+                            disabled={chatLoading || !chatText.trim()}
+                            sx={{ 
+                                bgcolor: '#60a5fa',
+                                '&:hover': { bgcolor: '#3b82f6' },
+                                '&:disabled': { bgcolor: '#374151' }
+                            }}
+                        >
+                            Send
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+            </Box>
+        </ThemeProvider>
     );
 };
 
