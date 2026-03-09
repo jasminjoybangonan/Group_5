@@ -36,15 +36,14 @@ import {
     Comment,
     Send,
     Star,
-    StarBorder
+    StarBorder,
+    Delete
 } from '@mui/icons-material';
 
 const StudentShowArticle = ({ article, isFavorite: initialFavorite = false }) => {
     const [anchorEl, setAnchorEl] = useState(null);
-    const [chatOpen, setChatOpen] = useState(false);
-    const [chatLoading, setChatLoading] = useState(false);
-    const [chatMessages, setChatMessages] = useState([]);
-    const [chatText, setChatText] = useState('');
+    const [commentText, setCommentText] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [isFavorite, setIsFavorite] = useState(initialFavorite);
 
     const { auth } = usePage().props;
@@ -86,55 +85,35 @@ const StudentShowArticle = ({ article, isFavorite: initialFavorite = false }) =>
         });
     };
 
-    const csrfToken = useMemo(() => {
-        const el = document.querySelector('meta[name="csrf-token"]');
-        return el?.getAttribute('content') || '';
-    }, []);
+    const handleSubmitComment = () => {
+        if (!commentText.trim()) return;
+        
+        setIsSubmitting(true);
+        router.post(`/student/articles/${article.id}/comment`, {
+            content: commentText.trim()
+        }, {
+            preserveScroll: true,
+            onFinish: () => {
+                setIsSubmitting(false);
+                setCommentText('');
+            },
+            onSuccess: () => {
+                // Comments will be reloaded with the next page refresh
+                // or we could use Inertia's reload functionality
+            }
+        });
+    };
 
-    const loadChat = useCallback(async () => {
-        setChatLoading(true);
-        try {
-            const res = await fetch(`/articles/${article.id}/messages`, {
-                headers: {
-                    'Accept': 'application/json'
-                },
-                credentials: 'same-origin'
+    const handleDeleteComment = (commentId) => {
+        if (confirm('Are you sure you want to delete this comment?')) {
+            router.delete(`/student/comments/${commentId}`, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    // Comment will be removed after page reload
+                }
             });
-            const data = await res.json();
-            setChatMessages(Array.isArray(data?.messages) ? data.messages : []);
-        } finally {
-            setChatLoading(false);
         }
-    }, [article.id]);
-
-    const sendChat = useCallback(async () => {
-        const trimmed = chatText.trim();
-        if (!trimmed) return;
-
-        setChatLoading(true);
-        try {
-            await fetch(`/articles/${article.id}/messages`, {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken
-                },
-                credentials: 'same-origin',
-                body: JSON.stringify({ message: trimmed })
-            });
-            setChatText('');
-            await loadChat();
-        } finally {
-            setChatLoading(false);
-        }
-    }, [article.id, chatText, csrfToken, loadChat]);
-
-    useEffect(() => {
-        if (chatOpen) {
-            loadChat();
-        }
-    }, [chatOpen, loadChat]);
+    };
 
     return (
         <ThemeProvider theme={theme}>
@@ -185,31 +164,11 @@ const StudentShowArticle = ({ article, isFavorite: initialFavorite = false }) =>
                         }
                     }}
                 >
-                    <MenuItem onClick={handleMenuClose}>
+                    <MenuItem onClick={() => { router.get('/profile'); handleMenuClose(); }}>
                         <ListItemIcon>
                             <Person sx={{ color: '#60a5fa' }} />
                         </ListItemIcon>
                         Profile
-                    </MenuItem>
-                    
-                    <Divider sx={{ backgroundColor: '#334155' }} />
-                    <MenuItem onClick={() => { router.get('/writer/dashboard'); handleMenuClose(); }}>
-                        <ListItemIcon>
-                            <Edit sx={{ color: '#f59e0b' }} />
-                        </ListItemIcon>
-                        Switch to Writer
-                    </MenuItem>
-                    <MenuItem onClick={() => { router.get('/editor/dashboard'); handleMenuClose(); }}>
-                        <ListItemIcon>
-                            <RateReview sx={{ color: '#ef4444' }} />
-                        </ListItemIcon>
-                        Switch to Editor
-                    </MenuItem>
-                    <MenuItem onClick={() => { router.get('/student/dashboard'); handleMenuClose(); }}>
-                        <ListItemIcon>
-                            <Visibility sx={{ color: '#10b981' }} />
-                        </ListItemIcon>
-                        Switch to Student
                     </MenuItem>
                     
                     <Divider sx={{ backgroundColor: '#334155' }} />
@@ -299,7 +258,7 @@ const StudentShowArticle = ({ article, isFavorite: initialFavorite = false }) =>
                                 variant="outlined"
                                 size="large"
                                 startIcon={<Comment />}
-                                onClick={() => setChatOpen(true)}
+                                onClick={() => document.getElementById('comments-section').scrollIntoView({ behavior: 'smooth' })}
                                 sx={{ 
                                     px: 4,
                                     color: '#60a5fa',
@@ -307,7 +266,7 @@ const StudentShowArticle = ({ article, isFavorite: initialFavorite = false }) =>
                                     '&:hover': { borderColor: '#3b82f6', color: '#3b82f6' }
                                 }}
                             >
-                                View Comments ({chatMessages.length})
+                                View Comments ({article.comments?.length || 0})
                             </Button>
                             <Button
                                 variant="contained"
@@ -333,7 +292,7 @@ const StudentShowArticle = ({ article, isFavorite: initialFavorite = false }) =>
                         <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
                             <Box sx={{ textAlign: 'center' }}>
                                 <Typography variant="h4" sx={{ color: '#60a5fa', fontWeight: 'bold' }}>
-                                    {chatMessages.length}
+                                    {article.comments?.length || 0}
                                 </Typography>
                                 <Typography variant="body2" sx={{ color: '#94a3b8' }}>
                                     Comments
@@ -357,102 +316,119 @@ const StudentShowArticle = ({ article, isFavorite: initialFavorite = false }) =>
                             </Box>
                         </Box>
                     </Paper>
-                </Box>
 
-                {/* Comments Dialog */}
-                <Dialog open={chatOpen} onClose={() => setChatOpen(false)} maxWidth="sm" fullWidth>
-                    <DialogTitle sx={{ backgroundColor: '#1e293b', color: '#ffffff' }}>
-                        Article Comments & Discussion
-                    </DialogTitle>
-                    <DialogContent sx={{ backgroundColor: '#1e293b', color: '#ffffff' }}>
-                        <Box sx={{ minHeight: 260, maxHeight: 360, overflowY: 'auto', mb: 2 }}>
-                            {chatLoading && (
-                                <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
-                                    <CircularProgress size={24} sx={{ color: '#60a5fa' }} />
-                                </Box>
-                            )}
-                            {!chatLoading && chatMessages.length === 0 && (
-                                <Typography variant="body2" sx={{ color: '#94a3b8', py: 2 }}>
-                                    No comments yet. Be the first to comment!
-                                </Typography>
-                            )}
-                            {!chatLoading && chatMessages.length > 0 && (
-                                <List dense>
-                                    {chatMessages.map((m) => (
-                                        <ListItem key={m.id} alignItems="flex-start" disableGutters>
+                    {/* Comments Section */}
+                    <Paper id="comments-section" sx={{ p: 4, backgroundColor: '#1e293b', border: '1px solid #334155' }}>
+                        <Typography variant="h5" sx={{ color: '#10b981', mb: 3, fontWeight: 'bold' }}>
+                            Comments & Discussion
+                        </Typography>
+                        
+                        {/* Comments List */}
+                        <Box sx={{ mb: 4 }}>
+                            {article.comments && article.comments.length > 0 ? (
+                                <List>
+                                    {article.comments.map((comment) => (
+                                        <ListItem key={comment.id} alignItems="flex-start" disableGutters sx={{ mb: 2 }}>
                                             <ListItemIcon>
-                                                <Avatar sx={{ width: 32, height: 32, bgcolor: '#60a5fa' }}>
-                                                    {m.sender?.name?.charAt(0) || 'U'}
+                                                <Avatar sx={{ width: 40, height: 40, bgcolor: '#60a5fa' }}>
+                                                    {comment.student?.name?.charAt(0) || 'S'}
                                                 </Avatar>
                                             </ListItemIcon>
                                             <ListItemText
-                                                primary={m.sender?.name || 'User'}
-                                                primaryTypographyProps={{ color: '#ffffff', fontWeight: 'bold' }}
-                                                secondary={
-                                                    <Box>
-                                                        <Typography variant="body2" sx={{ color: '#94a3b8', mb: 1 }}>
-                                                            {new Date(m.created_at).toLocaleDateString()}
+                                                primary={
+                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                        <Typography variant="subtitle1" sx={{ color: '#ffffff', fontWeight: 'bold' }}>
+                                                            {comment.student?.name || 'Student'}
                                                         </Typography>
-                                                        <Typography variant="body2" sx={{ color: '#ffffff' }}>
-                                                            {m.message}
-                                                        </Typography>
+                                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                            <Typography variant="caption" sx={{ color: '#94a3b8' }}>
+                                                                {new Date(comment.created_at).toLocaleDateString()}
+                                                            </Typography>
+                                                            {comment.student_id === auth?.user?.id && (
+                                                                <IconButton
+                                                                    size="small"
+                                                                    onClick={() => handleDeleteComment(comment.id)}
+                                                                    sx={{ 
+                                                                        color: '#ef4444',
+                                                                        '&:hover': { color: '#dc2626', bgcolor: 'rgba(239, 68, 68, 0.1)' }
+                                                                    }}
+                                                                    title="Delete your comment"
+                                                                >
+                                                                    <Delete fontSize="small" />
+                                                                </IconButton>
+                                                            )}
+                                                        </Box>
                                                     </Box>
+                                                }
+                                                secondary={
+                                                    <Typography variant="body2" sx={{ color: '#ffffff', mt: 1 }}>
+                                                        {comment.content}
+                                                    </Typography>
                                                 }
                                             />
                                         </ListItem>
                                     ))}
                                 </List>
+                            ) : (
+                                <Typography variant="body2" sx={{ color: '#94a3b8', textAlign: 'center', py: 4 }}>
+                                    No comments yet. Be the first to share your thoughts!
+                                </Typography>
                             )}
                         </Box>
 
-                        <TextField
-                            fullWidth
-                            multiline
-                            minRows={2}
-                            label="Add a comment"
-                            value={chatText}
-                            onChange={(e) => setChatText(e.target.value)}
-                            placeholder="Share your thoughts on this article..."
-                            sx={{ 
-                                '& .MuiOutlinedInput-root': {
-                                    '& fieldset': {
-                                        borderColor: '#334155',
+                        {/* Add Comment Form */}
+                        <Divider sx={{ backgroundColor: '#334155', mb: 3 }} />
+                        
+                        <Typography variant="h6" sx={{ color: '#ffffff', mb: 2 }}>
+                            Add Your Comment
+                        </Typography>
+                        
+                        <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-end' }}>
+                            <TextField
+                                fullWidth
+                                multiline
+                                minRows={3}
+                                label="Share your thoughts on this article..."
+                                value={commentText}
+                                onChange={(e) => setCommentText(e.target.value)}
+                                disabled={isSubmitting}
+                                sx={{ 
+                                    '& .MuiOutlinedInput-root': {
+                                        '& fieldset': {
+                                            borderColor: '#334155',
+                                        },
+                                        '&:hover fieldset': {
+                                            borderColor: '#60a5fa',
+                                        },
+                                        '&.Mui-focused fieldset': {
+                                            borderColor: '#60a5fa',
+                                        },
                                     },
-                                    '&:hover fieldset': {
-                                        borderColor: '#60a5fa',
+                                    '& .MuiInputLabel-root': {
+                                        color: '#94a3b8',
                                     },
-                                    '&.Mui-focused fieldset': {
-                                        borderColor: '#60a5fa',
-                                    },
-                                },
-                                '& .MuiInputLabel-root': {
-                                    color: '#94a3b8',
-                                },
-                                '& .MuiInputLabel-focused': {
-                                    color: '#60a5fa',
-                                }
-                            }}
-                        />
-                    </DialogContent>
-                    <DialogActions sx={{ backgroundColor: '#1e293b' }}>
-                        <Button onClick={() => setChatOpen(false)} sx={{ color: '#94a3b8' }}>
-                            Close
-                        </Button>
-                        <Button 
-                            onClick={sendChat} 
-                            variant="contained"
-                            disabled={chatLoading || !chatText.trim()}
-                            sx={{ 
-                                bgcolor: '#60a5fa',
-                                '&:hover': { bgcolor: '#3b82f6' },
-                                '&:disabled': { bgcolor: '#374151' }
-                            }}
-                        >
-                            <Send sx={{ mr: 1 }} />
-                            Send Comment
-                        </Button>
-                    </DialogActions>
-                </Dialog>
+                                    '& .MuiInputLabel-focused': {
+                                        color: '#60a5fa',
+                                    }
+                                }}
+                            />
+                            <Button
+                                variant="contained"
+                                onClick={handleSubmitComment}
+                                disabled={isSubmitting || !commentText.trim()}
+                                sx={{ 
+                                    bgcolor: '#60a5fa',
+                                    '&:hover': { bgcolor: '#3b82f6' },
+                                    '&:disabled': { bgcolor: '#374151' },
+                                    px: 3,
+                                    py: 2
+                                }}
+                            >
+                                {isSubmitting ? 'Posting...' : 'Post Comment'}
+                            </Button>
+                        </Box>
+                    </Paper>
+                </Box>
             </Box>
         </ThemeProvider>
     );

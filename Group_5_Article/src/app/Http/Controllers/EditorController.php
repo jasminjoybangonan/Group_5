@@ -45,6 +45,19 @@ class EditorController extends Controller
         ]);
     }
 
+    public function needsRevision()
+    {
+        $needsRevisionId = $this->statusId('needs_revision');
+
+        $needsRevision = Article::when($needsRevisionId, fn ($q) => $q->where('status_id', $needsRevisionId))
+            ->with(['writer', 'category', 'status', 'revisions'])
+            ->get();
+
+        return Inertia::render('Editor/Revision', [
+            'needsRevision' => $needsRevision
+        ]);
+    }
+
     public function review(Article $article)
     {
         $this->authorize('review', $article);
@@ -93,6 +106,6 @@ class EditorController extends Controller
         // Notify the writer
         $article->writer->notify(new ArticlePublishedNotification($article));
 
-        return back()->with('success', 'Article published!');
+        return redirect()->back()->with('success', 'Article published successfully!');
     }
 }

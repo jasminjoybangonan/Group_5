@@ -11,7 +11,11 @@ export default function JoditEditorSample() {
     const config = useMemo(
         () => ({
             readonly: false,
-            placeholder: 'Start writing your article...'
+            placeholder: 'Start writing your article...',
+            style: {
+                color: '#000000',
+                backgroundColor: '#ffffff'
+            }
         }),
         []
     );

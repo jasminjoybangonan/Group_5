@@ -59,6 +59,31 @@ class WriterController extends Controller
         ]);
     }
 
+    public function create()
+    {
+        $categories = Category::all();
+
+        return Inertia::render('Writer/Create', [
+            'categories' => $categories
+        ]);
+    }
+
+    public function revision()
+    {
+        $needsRevisionId = $this->statusId('needs_revision');
+
+        $needsRevision = Article::when($needsRevisionId, fn ($q) => $q->where('status_id', $needsRevisionId))
+            ->where('writer_id', Auth::id())
+            ->with(['writer', 'category', 'status', 'revisions' => function($query) {
+                $query->with('editor')->latest();
+            }])
+            ->get();
+
+        return Inertia::render('Writer/Revision', [
+            'needsRevision' => $needsRevision
+        ]);
+    }
+
     public function edit(Article $article)
     {
         $this->authorize('update', $article);
@@ -91,18 +116,35 @@ class WriterController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
-            'category_id' => 'required|exists:categories,id'
+            'category_id' => 'required|exists:categories,id',
+            'status' => 'sometimes|string|in:draft',
+            'submit_for_review' => 'sometimes|boolean'
         ]);
 
+        // Determine status based on parameters
+        if (isset($validated['submit_for_review']) && $validated['submit_for_review']) {
+            $statusName = 'submitted';
+        } else {
+            $statusName = $validated['status'] ?? 'draft';
+        }
+        
         $article = Article::create([
             'title' => $validated['title'],
             'content' => $validated['content'],
             'category_id' => $validated['category_id'],
             'writer_id' => Auth::id(),
-            'status_id' => $this->statusId('draft')
+            'status_id' => $this->statusId($statusName)
         ]);
 
-        return redirect()->back()->with('success', 'Article created successfully!');
+        // If submitted for review, notify editors
+        if ($statusName === 'submitted') {
+            $editors = \App\Models\User::role('editor')->get();
+            Notification::send($editors, new \App\Notifications\ArticleSubmittedNotification($article));
+            return redirect()->back()->with('success', 'Article submitted for review!');
+        }
+
+        // If saved as draft
+        return redirect()->back()->with('success', 'Article saved as draft!');
     }
 
     public function update(Request $request, Article $article)

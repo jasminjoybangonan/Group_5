@@ -45,23 +45,23 @@ class ArticlePolicy
 
     public function review(User $user, Article $article): Response
     {
-        return $user->hasRole('editor') && ($article->isSubmitted() || $article->needsRevision())
+        return $user->hasRole('editor')
             ? Response::allow()
-            : Response::deny('Only editors can review submitted or revision-requested articles.');
+            : Response::deny('Only editors can review articles.');
     }
 
     public function requestRevision(User $user, Article $article): Response
     {
-        return $user->hasRole('editor') && $article->isSubmitted()
+        return $user->hasRole('editor')
             ? Response::allow()
             : Response::deny('Only editors can request revisions for submitted articles.');
     }
 
     public function publish(User $user, Article $article): Response
     {
-        return $user->hasRole('editor') && $article->isSubmitted()
+        return $user->hasRole('editor')
             ? Response::allow()
-            : Response::deny('Only editors can publish submitted articles.');
+            : Response::deny('Only editors can publish articles.');
     }
 
     public function view(User $user, Article $article): Response

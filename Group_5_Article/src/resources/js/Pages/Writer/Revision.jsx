@@ -22,27 +22,29 @@ import {
 } from '@mui/material';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import {
-    RateReview,
-    Publish,
+    Edit,
     Person,
     Logout,
     ArrowBack,
     Assignment,
-    Edit,
     Menu as MenuIcon,
-    Visibility
+    Visibility,
+    Send,
+    RateReview
 } from '@mui/icons-material';
+import JoditEditor from 'jodit-react';
 
-const PendingReview = ({ pending }) => {
+const WriterRevision = ({ needsRevision }) => {
     const [anchorEl, setAnchorEl] = useState(null);
     const [selectedArticle, setSelectedArticle] = useState(null);
-    const [revisionDialog, setRevisionDialog] = useState(false);
-    const [revisionComments, setRevisionComments] = useState('');
+    const [reviseDialog, setReviseDialog] = useState(false);
+    const [articleContent, setArticleContent] = useState('');
+    const [editor, setEditor] = useState(null);
 
-    const { flash } = usePage().props;
+    const { flash, auth } = usePage().props;
 
     // Ensure we have arrays even if props are undefined
-    const pendingArray = Array.isArray(pending) ? pending : [];
+    const revisionArray = Array.isArray(needsRevision) ? needsRevision : [];
 
     const theme = createTheme({
         palette: {
@@ -54,6 +56,19 @@ const PendingReview = ({ pending }) => {
         },
         typography: { fontFamily: '"Times New Roman", Times, serif' }
     });
+
+    const config = {
+        readonly: false,
+        placeholder: 'Revise your article content...',
+        toolbar: true,
+        showCharsCounter: true,
+        showWordsCounter: true,
+        showXPathInStatusbar: false,
+        style: {
+            color: '#000000',
+            backgroundColor: '#ffffff'
+        }
+    };
 
     const handleMenuOpen = (event) => {
         setAnchorEl(event.currentTarget);
@@ -71,48 +86,34 @@ const PendingReview = ({ pending }) => {
         });
     };
 
-    const handleReview = (article) => {
-        router.get(`/editor/articles/${article.id}/review`);
-    };
-
-    const openRevisionDialog = (article) => {
+    const openReviseDialog = (article) => {
         setSelectedArticle(article);
-        setRevisionDialog(true);
+        setArticleContent(article.content || '');
+        setReviseDialog(true);
     };
 
-    const handleRequestRevision = () => {
-        if (selectedArticle && revisionComments.trim()) {
-            router.post(`/editor/articles/${selectedArticle.id}/revision`, {
-                comments: revisionComments
+    const handleReviseArticle = () => {
+        if (selectedArticle && articleContent.trim()) {
+            router.put(`/writer/articles/${selectedArticle.id}/revise`, {
+                content: articleContent
             }, {
                 onSuccess: () => {
-                    setRevisionDialog(false);
-                    setRevisionComments('');
+                    setReviseDialog(false);
+                    setArticleContent('');
                     setSelectedArticle(null);
                 },
                 onError: (errors) => {
-                    console.error('Revision request failed:', errors);
-                    alert('Failed to send revision request. Please try again.');
+                    console.error('Revision failed:', errors);
+                    alert('Failed to revise article. Please try again.');
                 }
             });
         } else {
-            alert('Please provide revision comments before submitting.');
+            alert('Please provide revised content before submitting.');
         }
     };
 
-    const handlePublish = (article) => {
-        if (window.confirm(`Are you sure you want to publish "${article.title}"?`)) {
-            router.post(`/editor/articles/${article.id}/publish`, {}, {
-                onSuccess: () => {
-                    // Redirect to the published article view
-                    router.get(`/student/articles/${article.id}`);
-                },
-                onError: (errors) => {
-                    console.error('Publish failed:', errors);
-                    alert('Failed to publish article. Please try again.');
-                }
-            });
-        }
+    const handleViewArticle = (article) => {
+        router.get(`/writer/articles/${article.id}/view`);
     };
 
     const ArticleCard = ({ article }) => (
@@ -134,14 +135,14 @@ const PendingReview = ({ pending }) => {
             <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
                 <Avatar 
                     sx={{ 
-                        bgcolor: '#f59e0b', 
+                        bgcolor: '#ef4444', 
                         width: 48, 
                         height: 48,
                         mr: 2,
                         boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
                     }}
                 >
-                    <Assignment sx={{ color: '#fff' }} />
+                    <Edit sx={{ color: '#fff' }} />
                 </Avatar>
                 <Box sx={{ flexGrow: 1 }}>
                     <Typography variant="h6" component="div" sx={{ fontWeight: 'bold', mb: 0.5, lineHeight: 1.2, color: '#ffffff' }}>
@@ -152,58 +153,54 @@ const PendingReview = ({ pending }) => {
                             label={article.status?.label}
                             color="default"
                             size="small"
-                            sx={{ fontWeight: 'bold', bgcolor: '#f59e0b', color: '#fff' }}
+                            sx={{ fontWeight: 'bold', bgcolor: '#ef4444', color: '#fff' }}
                         />
-                        <Typography variant="body2" sx={{ fontSize: '0.875rem', color: '#94a3b8' }}>
-                            By {article.writer?.name}
-                        </Typography>
                         <Typography variant="body2" sx={{ fontSize: '0.875rem', color: '#94a3b8' }}>
                             Category: {article.category?.name}
                         </Typography>
                     </Box>
+                    {article.revisions && article.revisions.length > 0 && (
+                        <Box sx={{ mt: 1, p: 2, backgroundColor: '#0f172a', borderRadius: 1, border: '1px solid #334155' }}>
+                            <Typography variant="body2" sx={{ color: '#ffffff', mb: 1, fontWeight: 'bold' }}>
+                                Latest revision request:
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: '#ffffff', fontStyle: 'italic' }}>
+                                "{article.revisions[article.revisions.length - 1].comments}"
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: '#94a3b8', mt: 1, display: 'block' }}>
+                                By {article.revisions[article.revisions.length - 1].editor?.name} on {new Date(article.revisions[article.revisions.length - 1].created_at).toLocaleDateString()}
+                            </Typography>
+                        </Box>
+                    )}
                 </Box>
             </Box>
             
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                <Tooltip title="Review this article">
+                <Tooltip title="View article details">
                     <Button
                         size="small"
-                        onClick={() => handleReview(article)}
+                        onClick={() => handleViewArticle(article)}
                         sx={{ 
                             bgcolor: '#60a5fa', 
                             color: '#fff',
                             '&:hover': { bgcolor: '#3b82f6' }
                         }}
                     >
-                        Review Article
+                        View Article
                     </Button>
                 </Tooltip>
                 
-                <Tooltip title="Request revision">
+                <Tooltip title="Revise and resubmit article">
                     <Button
                         size="small"
-                        onClick={() => openRevisionDialog(article)}
-                        sx={{ 
-                            bgcolor: '#f59e0b', 
-                            color: '#fff',
-                            '&:hover': { bgcolor: '#d97706' }
-                        }}
-                    >
-                        Request Revision
-                    </Button>
-                </Tooltip>
-                
-                <Tooltip title="Publish this article">
-                    <Button
-                        size="small"
-                        onClick={() => handlePublish(article)}
+                        onClick={() => openReviseDialog(article)}
                         sx={{ 
                             bgcolor: '#10b981', 
                             color: '#fff',
                             '&:hover': { bgcolor: '#059669' }
                         }}
                     >
-                        Publish
+                        Revise & Resubmit
                     </Button>
                 </Tooltip>
             </Box>
@@ -212,7 +209,7 @@ const PendingReview = ({ pending }) => {
 
     return (
         <ThemeProvider theme={theme}>
-            <Head title="Pending Review - Editor" />
+            <Head title="Articles Needing Revision - Writer" />
             
             {/* Background */}
             <Box
@@ -245,11 +242,11 @@ const PendingReview = ({ pending }) => {
                 <Box sx={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1300, backgroundColor: '#0f172a', borderBottom: '1px solid #334155' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <IconButton onClick={() => router.get('/editor/dashboard')} sx={{ color: '#ffffff' }}>
+                            <IconButton onClick={() => router.get('/writer/dashboard')} sx={{ color: '#ffffff' }}>
                                 <ArrowBack />
                             </IconButton>
                             <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#ffffff' }}>
-                                Pending Review
+                                Articles Needing Revision
                             </Typography>
                         </Box>
                         
@@ -343,26 +340,26 @@ const PendingReview = ({ pending }) => {
                                         width: 60, 
                                         height: 60, 
                                         borderRadius: '50%', 
-                                        backgroundColor: '#f59e0b',
+                                        backgroundColor: '#ef4444',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
                                     }}>
-                                        <RateReview sx={{ color: '#fff' }} />
+                                        <Edit sx={{ color: '#fff' }} />
                                     </Box>
                                     <Box sx={{ flexGrow: 1 }}>
-                                        <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#f59e0b', mb: 1 }}>
-                                            Pending Review
+                                        <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#ef4444', mb: 1 }}>
+                                            Articles Needing Revision
                                         </Typography>
                                         <Typography variant="body1" sx={{ color: '#94a3b8', mb: 2 }}>
-                                            Articles submitted by writers that are waiting for your review and approval
+                                            Articles that have been returned by editors with revision requests. Review the feedback and revise your content.
                                         </Typography>
                                         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                                             <Chip 
-                                                label={`${pendingArray.length} articles`}
+                                                label={`${revisionArray.length} articles`}
                                                 sx={{ 
-                                                    backgroundColor: '#f59e0b', 
+                                                    backgroundColor: '#ef4444', 
                                                     color: '#fff',
                                                     fontWeight: 'bold'
                                                 }} 
@@ -382,7 +379,7 @@ const PendingReview = ({ pending }) => {
                             </Paper>
 
                             {/* Articles List */}
-                            {pendingArray.length === 0 ? (
+                            {revisionArray.length === 0 ? (
                                 <Paper sx={{ p: 6, textAlign: 'center', backgroundColor: '#1e293b', border: '1px solid #334155' }}>
                                     <Box sx={{ 
                                         width: 80, 
@@ -395,18 +392,18 @@ const PendingReview = ({ pending }) => {
                                         mx: 'auto',
                                         mb: 3
                                     }}>
-                                        <RateReview sx={{ color: '#f59e0b' }} />
+                                        <Edit sx={{ color: '#ef4444' }} />
                                     </Box>
                                     <Typography variant="h5" sx={{ color: '#94a3b8', mb: 2 }}>
-                                        No pending review articles
+                                        No articles need revision
                                     </Typography>
                                     <Typography variant="body2" sx={{ color: '#64748b' }}>
-                                        Articles submitted by writers will appear here for your review.
+                                        Articles requiring revision will appear here once editors send them back.
                                     </Typography>
                                 </Paper>
                             ) : (
                                 <Box>
-                                    {pendingArray.map((article) => (
+                                    {revisionArray.map((article) => (
                                         <ArticleCard
                                             key={article.id}
                                             article={article}
@@ -419,53 +416,58 @@ const PendingReview = ({ pending }) => {
                 </Box>
 
                 {/* Revision Dialog */}
-                <Dialog open={revisionDialog} onClose={() => setRevisionDialog(false)} maxWidth="md" fullWidth>
+                <Dialog open={reviseDialog} onClose={() => setReviseDialog(false)} maxWidth="lg" fullWidth>
                     <DialogTitle sx={{ backgroundColor: '#1e293b', color: '#ffffff', borderBottom: '1px solid #334155' }}>
-                        Request Revision for "{selectedArticle?.title}"
+                        Revise Article: "{selectedArticle?.title}"
                     </DialogTitle>
                     <DialogContent sx={{ backgroundColor: '#1e293b', color: '#ffffff' }}>
-                        <TextField
-                            fullWidth
-                            multiline
-                            rows={4}
-                            label="Revision Comments"
-                            value={revisionComments}
-                            onChange={(e) => setRevisionComments(e.target.value)}
-                            sx={{ 
-                                '& .MuiOutlinedInput-root': {
-                                    '& fieldset': {
-                                        borderColor: '#334155',
-                                    },
-                                    '&:hover fieldset': {
-                                        borderColor: '#60a5fa',
-                                    },
-                                    '&.Mui-focused fieldset': {
-                                        borderColor: '#60a5fa',
-                                    },
-                                },
-                                '& .MuiInputLabel-root': {
-                                    color: '#94a3b8',
-                                },
-                                '& .MuiInputLabel-focused': {
-                                    color: '#60a5fa',
-                                }
-                            }}
-                        />
+                        <Typography variant="subtitle1" gutterBottom sx={{ color: '#ffffff', mb: 2 }}>
+                            Editor Feedback:
+                        </Typography>
+                        {selectedArticle?.revisions && selectedArticle.revisions.length > 0 && (
+                            <Box sx={{ p: 2, backgroundColor: '#0f172a', borderRadius: 1, border: '1px solid #334155', mb: 3 }}>
+                                <Typography variant="body2" sx={{ color: '#ffffff', fontStyle: 'italic' }}>
+                                    "{selectedArticle.revisions[selectedArticle.revisions.length - 1].comments}"
+                                </Typography>
+                                <Typography variant="caption" sx={{ color: '#94a3b8', mt: 1, display: 'block' }}>
+                                    - {selectedArticle.revisions[selectedArticle.revisions.length - 1].editor?.name}
+                                </Typography>
+                            </Box>
+                        )}
+                        
+                        <Typography variant="subtitle1" gutterBottom sx={{ color: '#ffffff', mb: 2 }}>
+                            Revised Article Content:
+                        </Typography>
+                        <Box sx={{ 
+                            border: '1px solid #334155',
+                            borderRadius: 1,
+                            overflow: 'hidden',
+                            '& .jodit-container': {
+                                backgroundColor: '#ffffff !important'
+                            }
+                        }}>
+                            <JoditEditor
+                                value={articleContent}
+                                config={config}
+                                onBlur={(newContent) => setArticleContent(newContent)}
+                                onChange={() => {}}
+                            />
+                        </Box>
                     </DialogContent>
                     <DialogActions sx={{ backgroundColor: '#1e293b', borderTop: '1px solid #334155' }}>
-                        <Button onClick={() => setRevisionDialog(false)} sx={{ color: '#94a3b8' }}>
+                        <Button onClick={() => setReviseDialog(false)} sx={{ color: '#94a3b8' }}>
                             Cancel
                         </Button>
                         <Button 
-                            onClick={handleRequestRevision} 
+                            onClick={handleReviseArticle} 
                             variant="contained"
                             sx={{ 
-                                bgcolor: '#60a5fa', 
+                                bgcolor: '#10b981', 
                                 color: '#fff',
-                                '&:hover': { bgcolor: '#3b82f6' }
+                                '&:hover': { bgcolor: '#059669' }
                             }}
                         >
-                            Send Revision Request
+                            Submit Revision
                         </Button>
                     </DialogActions>
                 </Dialog>
@@ -474,4 +476,4 @@ const PendingReview = ({ pending }) => {
     );
 };
 
-export default PendingReview;
+export default WriterRevision;

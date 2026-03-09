@@ -174,7 +174,7 @@ const PublishedArticles = ({ published }) => {
                 <Box sx={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1300, backgroundColor: '#0f172a', borderBottom: '1px solid #334155' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <IconButton component="a" href="/editor/dashboard" sx={{ color: '#ffffff' }}>
+                            <IconButton onClick={() => router.get('/editor/dashboard')} sx={{ color: '#ffffff' }}>
                                 <ArrowBack />
                             </IconButton>
                             <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#ffffff' }}>

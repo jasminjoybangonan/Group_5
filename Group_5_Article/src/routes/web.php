@@ -49,6 +49,11 @@ Route::get('/', function () {
 // Writer Routes
 Route::middleware(['web', 'auth', 'role:writer'])->prefix('writer')->name('writer.')->group(function () {
     Route::get('/dashboard', [WriterController::class, 'dashboard'])->name('dashboard');
+    Route::get('/revision', [WriterController::class, 'revision'])->name('revision');
+    Route::get('/test', function () {
+        return response()->json(['message' => 'Writer routes working!']);
+    });
+    Route::get('/articles/create', [WriterController::class, 'create'])->name('articles.create');
     Route::get('/articles/{article}/edit', [WriterController::class, 'edit'])->name('articles.edit');
     Route::get('/articles/{article}/view', [WriterController::class, 'view'])->name('articles.view');
     Route::post('/articles', [WriterController::class, 'store'])->name('articles.store');
@@ -64,6 +69,7 @@ Route::get('/writer-dashboard-test', [WriterController::class, 'dashboard'])->na
 // Editor Routes
 Route::middleware(['web', 'auth', 'role:editor'])->prefix('editor')->name('editor.')->group(function () {
     Route::get('/dashboard', [EditorController::class, 'dashboard'])->name('dashboard');
+    Route::get('/needs-revision', [EditorController::class, 'needsRevision'])->name('needs-revision');
     Route::get('/articles/{article}/review', [EditorController::class, 'review'])->name('articles.review');
     Route::post('/articles/{article}/revision', [EditorController::class, 'requestRevision'])->name('articles.revision');
     Route::post('/articles/{article}/publish', [EditorController::class, 'publish'])->name('articles.publish');

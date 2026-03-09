@@ -32,7 +32,6 @@ import {
 } from '@mui/material';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import {
-    ArrowBack,
     Person,
     Category,
     Publish,
@@ -42,7 +41,8 @@ import {
     Logout,
     Menu as MenuIcon,
     Edit,
-    Visibility
+    Visibility,
+    ArrowBack
 } from '@mui/icons-material';
 import JoditEditor from 'jodit-react';
 
@@ -50,11 +50,12 @@ const Review = ({ article }) => {
     const [anchorEl, setAnchorEl] = useState(null);
     const [revisionDialog, setRevisionDialog] = useState(false);
     const [revisionComments, setRevisionComments] = useState('');
-    const [content, setContent] = useState(article.content || '');
+    const [content, setContent] = useState(article?.content || '');
     const [chatOpen, setChatOpen] = useState(false);
     const [chatLoading, setChatLoading] = useState(false);
     const [chatMessages, setChatMessages] = useState([]);
     const [chatText, setChatText] = useState('');
+    const [error, setError] = useState(null);
     const editor = useRef(null);
 
     // Theme from Login.jsx - same as Dashboard
@@ -77,11 +78,17 @@ const Review = ({ article }) => {
             showCharsCounter: false,
             showWordsCounter: false,
             showXPathInStatusbar: false,
+            style: {
+                color: '#000000',
+                backgroundColor: '#ffffff'
+            }
         }),
         []
     );
 
     const isSubmitted = article?.status?.name === 'submitted';
+    const isPublished = article?.status?.name === 'published';
+    const canPublish = isSubmitted || isPublished;
 
     const csrfToken = useMemo(() => {
         const el = document.querySelector('meta[name="csrf-token"]');
@@ -150,12 +157,15 @@ const Review = ({ article }) => {
     }, [chatOpen, loadChat]);
 
     const handlePublish = () => {
-        if (!isSubmitted) {
+        if (!canPublish) {
             alert('Only submitted articles can be published.');
             return;
         }
         router.post(`/editor/articles/${article.id}/publish`, {}, {
-            onSuccess: () => router.get('/editor/dashboard')
+            onSuccess: () => {
+                // Redirect to the published article view
+                router.get(`/student/articles/${article.id}`);
+            }
         });
     };
 
@@ -172,16 +182,20 @@ const Review = ({ article }) => {
         router.post(`/editor/articles/${article.id}/revision`, {
             comments: revisionComments
         }, {
-            onSuccess: () => router.get('/editor/dashboard')
+            onSuccess: () => {
+                setRevisionDialog(false);
+                setRevisionComments('');
+                router.get('/editor/dashboard');
+            }
         });
     };
 
     return (
         <ThemeProvider theme={theme}>
-            <Head title={`Review: ${article.title}`} />
+            <Head title="Review Article" />
             
             <Box sx={{ 
-                minHeight: "100vh", 
+                minHeight: '100vh', 
                 backgroundColor: "#0b1220",
                 display: 'flex',
                 flexDirection: 'column'
@@ -195,17 +209,18 @@ const Review = ({ article }) => {
                     alignItems: 'center',
                     justifyContent: 'space-between'
                 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <IconButton 
+                    <Toolbar>
+                        <IconButton
+                            edge="start"
                             onClick={() => router.get('/editor/dashboard')}
-                            sx={{ color: '#ffffff' }}
+                            sx={{ color: '#ffffff', mr: 2 }}
                         >
                             <ArrowBack />
                         </IconButton>
                         <Typography variant="h4" sx={{ color: '#ffffff', fontWeight: 'bold' }}>
                             Review Article
                         </Typography>
-                    </Box>
+                    </Toolbar>
                     
                     <IconButton color="inherit" onClick={handleMenuOpen} sx={{ color: '#ffffff' }}>
                         <MenuIcon />
@@ -369,7 +384,7 @@ const Review = ({ article }) => {
                                         size="large"
                                         startIcon={<Publish />}
                                         onClick={handlePublish}
-                                        disabled={!isSubmitted}
+                                        disabled={!canPublish}
                                         sx={{ 
                                             px: 4,
                                             bgcolor: '#10b981',
@@ -384,7 +399,7 @@ const Review = ({ article }) => {
                                         size="large"
                                         startIcon={<Refresh />}
                                         onClick={() => setRevisionDialog(true)}
-                                        disabled={!isSubmitted}
+                                        disabled={!canPublish}
                                         sx={{ 
                                             px: 4,
                                             bgcolor: '#f59e0b',

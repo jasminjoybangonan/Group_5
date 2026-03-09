@@ -34,7 +34,8 @@ import {
     Visibility,
     RateReview,
     Comment,
-    Send
+    Send,
+    Create
 } from '@mui/icons-material';
 
 const WriterViewArticle = ({ article }) => {
@@ -45,6 +46,19 @@ const WriterViewArticle = ({ article }) => {
     const [chatText, setChatText] = useState('');
 
     const { auth } = usePage().props;
+
+    // Debug: Check if article data exists
+    console.log('Article data:', article);
+    
+    if (!article) {
+        return (
+            <Box sx={{ p: 4, textAlign: 'center' }}>
+                <Typography variant="h6" sx={{ color: '#f7fafc' }}>
+                    Article not found or loading...
+                </Typography>
+            </Box>
+        );
+    }
 
     // Theme from Login.jsx - same as Dashboard
     const theme = createTheme({
@@ -213,17 +227,37 @@ const WriterViewArticle = ({ article }) => {
                 <Box sx={{ flexGrow: 1, p: 3 }}>
                     <Paper sx={{ p: 4, backgroundColor: '#1e293b', border: '1px solid #334155', mb: 4 }}>
                         <Box sx={{ mb: 3 }}>
-                            <Typography variant="h3" gutterBottom sx={{ fontWeight: 'bold', color: '#10b981' }}>
+                            <Typography variant="h2" gutterBottom sx={{ fontWeight: 'bold', color: '#10b981', fontSize: '1.75rem' }}>
                                 {article.title}
                             </Typography>
                             
-                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                <Avatar sx={{ mr: 2, bgcolor: '#f59e0b' }}>
-                                    {article.writer?.name?.charAt(0) || 'W'}
+                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                                <Avatar sx={{ 
+                                    mr: 3, 
+                                    bgcolor: '#f59e0b', 
+                                    width: 64, 
+                                    height: 64,
+                                    fontSize: '1.5rem',
+                                    fontWeight: 700,
+                                    boxShadow: '0 4px 12px rgba(245, 158, 11, 0.1)'
+                                }}>
+                                    <Create />
                                 </Avatar>
                                 <Box>
-                                    <Typography variant="subtitle1" fontWeight="bold" sx={{ color: '#ffffff' }}>
-                                        By {article.writer?.name}
+                                    <Typography variant="h4" sx={{ 
+                                        color: '#ffffff', 
+                                        fontWeight: 700,
+                                        fontSize: '1.25rem',
+                                        mb: 1
+                                    }}>
+                                        {article.writer?.name}
+                                    </Typography>
+                                    <Typography variant="h6" sx={{ 
+                                        color: '#f59e0b', 
+                                        fontWeight: 600,
+                                        fontSize: '0.875rem'
+                                    }}>
+                                        Professional Writer
                                     </Typography>
                                     <Typography variant="body2" sx={{ color: '#94a3b8' }}>
                                         Published on {new Date(article.created_at).toLocaleDateString()}
@@ -258,7 +292,7 @@ const WriterViewArticle = ({ article }) => {
                                 border: '1px solid #334155'
                             }}>
                                 <div 
-                                    dangerouslySetInnerHTML={{ __html: article.content }}
+                                    dangerouslySetInnerHTML={{ __html: article.content || '<p>No content available</p>' }}
                                     style={{ 
                                         color: '#000000', 
                                         lineHeight: 1.6,

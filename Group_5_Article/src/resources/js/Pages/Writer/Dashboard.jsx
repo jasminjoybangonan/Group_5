@@ -26,10 +26,8 @@ import {
     ListItemText,
     ListItemIcon as MuiListItemIcon,
     Badge,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem as SelectMenuItem
+    Container,
+    Toolbar
 } from '@mui/material';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import {
@@ -38,43 +36,266 @@ import {
     Visibility,
     Person,
     Logout,
-    ArrowBack,
     Assignment,
     Edit,
     Menu as MenuIcon,
     TrendingUp,
-    Create,
     Send,
-    Delete,
+    Create,
     Article,
-    Comment
+    Refresh,
+    Add,
+    Assessment
 } from '@mui/icons-material';
-import JoditEditorComponent from '@/Components/JoditEditor';
 
-const WriterDashboard = ({ drafts, submitted, needsRevision, published, categories }) => {
+const WriterDashboard = ({ drafts, submitted, needsRevision, published }) => {
     const [anchorEl, setAnchorEl] = useState(null);
     const [selectedArticle, setSelectedArticle] = useState(null);
-    const [showCreateForm, setShowCreateForm] = useState(false);
-    const [profileDialog, setProfileDialog] = useState(false);
+    const [revisionDialog, setRevisionDialog] = useState(false);
+    const [revisionComments, setRevisionComments] = useState('');
     const [selectedFilter, setSelectedFilter] = useState('dashboard');
-    const [formData, setFormData] = useState({
-        title: '',
-        content: '',
-        category_id: ''
-    });
 
-    const { flash, auth } = usePage().props;
+    const { flash } = usePage().props;
 
-    // Theme from Login.jsx - same as Dashboard
+    // Professional Theme with enhanced styling
     const theme = createTheme({
         palette: {
             mode: "dark",
-            background: { default: "#0b1220", paper: "#0f172a" },
-            primary: { main: "#60a5fa" },
-            secondary: { main: "#22d3ee" },
-            text: { primary: "#ffffff" }
+            background: { 
+                default: "#0f0f23",
+                paper: "#1a1a2e"
+            },
+            primary: { 
+                main: "#667eea",
+                light: "#818cf8",
+                dark: "#5a67d8"
+            },
+            secondary: { 
+                main: "#f59e0b",
+                light: "#fbbf24",
+                dark: "#d97706"
+            },
+            success: { 
+                main: "#48bb78",
+                light: "#68d391",
+                dark: "#38a169"
+            },
+            warning: { 
+                main: "#ed8936",
+                light: "#f6ad55",
+                dark: "#dd6b20"
+            },
+            error: { 
+                main: "#f56565",
+                light: "#fc8181",
+                dark: "#e53e3e"
+            },
+            info: { 
+                main: "#4299e1",
+                light: "#63b3ed",
+                dark: "#3182ce"
+            },
+            text: { 
+                primary: "#f7fafc",
+                secondary: "#cbd5e0",
+                disabled: "#718096"
+            },
+            divider: "#2d3748"
         },
-        typography: { fontFamily: '"Times New Roman", Times, serif' }
+        typography: { 
+            fontFamily: '"Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            h1: {
+                fontWeight: 800,
+                fontSize: '2.5rem',
+                lineHeight: 1.2,
+                letterSpacing: '-0.02em'
+            },
+            h2: {
+                fontWeight: 700,
+                fontSize: '2rem',
+                lineHeight: 1.3,
+                letterSpacing: '-0.01em'
+            },
+            h3: {
+                fontWeight: 600,
+                fontSize: '1.75rem',
+                lineHeight: 1.4
+            },
+            h4: { 
+                fontWeight: 600,
+                fontSize: '1.5rem',
+                lineHeight: 1.4
+            },
+            h5: { 
+                fontWeight: 600,
+                fontSize: '1.25rem',
+                lineHeight: 1.5
+            },
+            h6: { 
+                fontWeight: 600,
+                fontSize: '1.125rem',
+                lineHeight: 1.5
+            },
+            body1: {
+                fontSize: '1rem',
+                lineHeight: 1.6,
+                fontWeight: 400
+            },
+            body2: {
+                fontSize: '0.875rem',
+                lineHeight: 1.5,
+                fontWeight: 400
+            },
+            subtitle1: {
+                fontSize: '1rem',
+                lineHeight: 1.5,
+                fontWeight: 500
+            },
+            subtitle2: {
+                fontSize: '0.875rem',
+                lineHeight: 1.5,
+                fontWeight: 500
+            }
+        },
+        shape: {
+            borderRadius: 12
+        },
+        spacing: 8,
+        components: {
+            MuiPaper: {
+                styleOverrides: {
+                    root: {
+                        backgroundImage: 'none',
+                        backgroundColor: '#1a1a2e',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                        backdropFilter: 'blur(10px)',
+                        '&:hover': {
+                            transform: 'translateY(-4px)',
+                            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3), 0 0 20px rgba(102, 126, 234, 0.1)',
+                            borderColor: 'rgba(102, 126, 234, 0.3)'
+                        }
+                    }
+                }
+            },
+            MuiButton: {
+                styleOverrides: {
+                    root: {
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        fontSize: '0.875rem',
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        borderRadius: 10,
+                        padding: '10px 24px',
+                        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                        '&:hover': {
+                            transform: 'translateY(-2px)',
+                            boxShadow: '0 8px 12px rgba(0, 0, 0, 0.2)'
+                        },
+                        '&:active': {
+                            transform: 'translateY(0)'
+                        }
+                    },
+                    contained: {
+                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        '&:hover': {
+                            background: 'linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%)'
+                        }
+                    },
+                    outlined: {
+                        borderWidth: 2,
+                        '&:hover': {
+                            borderWidth: 2
+                        }
+                    }
+                }
+            },
+            MuiCard: {
+                styleOverrides: {
+                    root: {
+                        backgroundColor: '#1a1a2e',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                        backdropFilter: 'blur(10px)',
+                        '&:hover': {
+                            transform: 'translateY(-6px)',
+                            boxShadow: '0 25px 50px rgba(0, 0, 0, 0.3), 0 0 30px rgba(102, 126, 234, 0.15)',
+                            borderColor: 'rgba(102, 126, 234, 0.4)'
+                        }
+                    }
+                }
+            },
+            MuiIconButton: {
+                styleOverrides: {
+                    root: {
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        borderRadius: 10,
+                        '&:hover': {
+                            transform: 'scale(1.05)',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            boxShadow: '0 4px 12px rgba(102, 126, 234, 0.2)'
+                        }
+                    }
+                }
+            },
+            MuiTextField: {
+                styleOverrides: {
+                    root: {
+                        '& .MuiOutlinedInput-root': {
+                            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                            borderRadius: 10,
+                            transition: 'all 0.3s ease',
+                            '&:hover': {
+                                backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                                '& fieldset': {
+                                    borderColor: '#667eea',
+                                    borderWidth: 2
+                                }
+                            },
+                            '&.Mui-focused': {
+                                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                                '& fieldset': {
+                                    borderColor: '#667eea',
+                                    borderWidth: 2,
+                                    boxShadow: '0 0 0 3px rgba(102, 126, 234, 0.1)'
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            MuiChip: {
+                styleOverrides: {
+                    root: {
+                        fontWeight: 600,
+                        fontSize: '0.75rem',
+                        borderRadius: 6,
+                        height: 28
+                    }
+                }
+            },
+            MuiListItem: {
+                styleOverrides: {
+                    root: {
+                        borderRadius: 8,
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)'
+                        }
+                    }
+                }
+            },
+            MuiDialog: {
+                styleOverrides: {
+                    paper: {
+                        backgroundColor: '#1a1a2e',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        borderRadius: 16,
+                        backdropFilter: 'blur(20px)'
+                    }
+                }
+            }
+        }
     });
 
     const handleMenuOpen = (event) => {
@@ -85,15 +306,6 @@ const WriterDashboard = ({ drafts, submitted, needsRevision, published, categori
         setAnchorEl(null);
     };
 
-    const handleProfileOpen = () => {
-        setProfileDialog(true);
-        handleMenuClose();
-    };
-
-    const handleProfileClose = () => {
-        setProfileDialog(false);
-    };
-
     const handleLogout = () => {
         router.post('/logout', {}, {
             onFinish: () => {
@@ -102,49 +314,33 @@ const WriterDashboard = ({ drafts, submitted, needsRevision, published, categori
         });
     };
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        router.post('/writer/articles', formData, {
-            preserveScroll: true,
-            onSuccess: () => {
-                setFormData({ title: '', content: '', category_id: '' });
-                setShowCreateForm(false);
-            }
-        });
+    const handleProfileOpen = () => {
+        router.get('/profile');
+        handleMenuClose();
     };
 
-    const handleInputChange = (field, value) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
+    const handleEdit = (articleId) => {
+        router.get(`/articles/${articleId}/edit`);
     };
 
-    const handleContentChange = (newContent) => {
-        setFormData(prev => ({ ...prev, content: newContent }));
+    const handleSubmit = (articleId) => {
+        if (window.confirm('Are you sure you want to submit this article for review?')) {
+            router.post(`/writer/articles/${articleId}/submit`);
+        }
     };
 
-    const handleSubmitArticle = (articleId) => {
-        router.post(`/writer/articles/${articleId}/submit`, {}, {
-            preserveScroll: true
-        });
-    };
-
-    const handleOpenArticle = (articleId) => {
-        router.get(`/writer/articles/${articleId}/edit`);
-    };
-
-    const handleViewPublished = (articleId) => {
+    const handleView = (articleId) => {
         router.get(`/writer/articles/${articleId}/view`);
     };
 
-    const handleDeleteArticle = (article) => {
-        if (!window.confirm(`Delete "${article.title}"? This cannot be undone.`)) return;
-        router.delete(`/writer/articles/${article.id}`, {
-            preserveScroll: true
-        });
+    const handleDelete = (articleId) => {
+        if (window.confirm('Are you sure you want to delete this article?')) {
+            router.delete(`/writer/articles/${articleId}`);
+        }
     };
 
     const handleFilterClick = (filter) => {
         setSelectedFilter(filter);
-        setShowCreateForm(false);
     };
 
     const getFilteredArticles = () => {
@@ -169,7 +365,7 @@ const WriterDashboard = ({ drafts, submitted, needsRevision, published, categori
             case 'dashboard':
                 return 'Dashboard Overview';
             case 'drafts':
-                return 'My Drafts';
+                return 'Draft Articles';
             case 'submitted':
                 return 'Submitted Articles';
             case 'revision':
@@ -184,9 +380,9 @@ const WriterDashboard = ({ drafts, submitted, needsRevision, published, categori
     const getFilterColor = () => {
         switch(selectedFilter) {
             case 'dashboard':
-                return '#60a5fa';
+                return '#667eea';
             case 'drafts':
-                return '#94a3b8';
+                return '#8b5cf6';
             case 'submitted':
                 return '#f59e0b';
             case 'revision':
@@ -194,7 +390,7 @@ const WriterDashboard = ({ drafts, submitted, needsRevision, published, categori
             case 'published':
                 return '#10b981';
             default:
-                return '#60a5fa';
+                return '#667eea';
         }
     };
 
@@ -207,7 +403,7 @@ const WriterDashboard = ({ drafts, submitted, needsRevision, published, categori
             case 'submitted':
                 return <Send />;
             case 'revision':
-                return <RateReview />;
+                return <Refresh />;
             case 'published':
                 return <Publish />;
             default:
@@ -215,61 +411,493 @@ const WriterDashboard = ({ drafts, submitted, needsRevision, published, categori
         }
     };
 
-    const getStatusColor = (status) => {
-        switch (status?.name) {
-            case 'draft': return '#94a3b8';
-            case 'submitted': return '#f59e0b';
-            case 'needs_revision': return '#ef4444';
-            case 'published': return '#10b981';
-            default: return '#94a3b8';
+    const getStatusIcon = (status) => {
+        switch(status?.value) {
+            case 'draft':
+                return <Edit />;
+            case 'submitted':
+                return <Send />;
+            case 'revision':
+                return <Refresh />;
+            case 'published':
+                return <Publish />;
+            default:
+                return <Edit />;
         }
     };
 
-    const getStatusIcon = (status) => {
-        switch (status?.name) {
-            case 'draft': return <Edit />;
-            case 'submitted': return <Send />;
-            case 'needs_revision': return <RateReview />;
-            case 'published': return <Publish />;
-            default: return <Edit />;
+    const getFilteredContent = () => {
+        switch(selectedFilter) {
+            case 'dashboard':
+                return (
+                    <Box>
+                        <Typography variant="h5" sx={{ color: '#667eea', mb: 3, fontWeight: 'bold' }}>
+                            Writer Dashboard Overview
+                        </Typography>
+                        
+                        {/* Action Cards */}
+                        <Grid container spacing={3} sx={{ mb: 4 }}>
+                            <Grid item xs={12} md={4}>
+                                <Paper sx={{ 
+                                    p: 4, 
+                                    backgroundColor: '#1e293b', 
+                                    border: '1px solid #334155',
+                                    textAlign: 'center',
+                                    cursor: 'pointer',
+                                    '&:hover': { border: '2px solid #8b5cf6' }
+                                }}
+                                    onClick={() => router.get('/writer/articles/create')}
+                                >
+                                    <Add sx={{ fontSize: 48, color: '#8b5cf6', mb: 2 }} />
+                                    <Typography variant="h5" sx={{ color: '#8b5cf6', fontWeight: 'bold', mb: 1 }}>
+                                        Create Article
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: '#94a3b8', mb: 2 }}>
+                                        Start writing a new article
+                                    </Typography>
+                                    <Button
+                                        variant="outlined"
+                                        sx={{ 
+                                            color: '#8b5cf6',
+                                            borderColor: '#8b5cf6',
+                                            '&:hover': { borderColor: '#7c3aed', color: '#7c3aed' }
+                                        }}
+                                    >
+                                        Create New
+                                    </Button>
+                                </Paper>
+                            </Grid>
+                            
+                            <Grid item xs={12} md={4}>
+                                <Paper sx={{ 
+                                    p: 4, 
+                                    backgroundColor: '#1e293b', 
+                                    border: '1px solid #334155',
+                                    textAlign: 'center',
+                                    cursor: 'pointer',
+                                    '&:hover': { border: '2px solid #f59e0b' }
+                                }}
+                                    onClick={() => setSelectedFilter('submitted')}
+                                >
+                                    <Send sx={{ fontSize: 48, color: '#f59e0b', mb: 2 }} />
+                                    <Typography variant="h5" sx={{ color: '#f59e0b', fontWeight: 'bold', mb: 1 }}>
+                                        Submitted Articles
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: '#94a3b8', mb: 2 }}>
+                                        Track articles under review ({submitted?.length || 0})
+                                    </Typography>
+                                    <Button
+                                        variant="outlined"
+                                        sx={{ 
+                                            color: '#f59e0b',
+                                            borderColor: '#f59e0b',
+                                            '&:hover': { borderColor: '#d97706', color: '#d97706' }
+                                        }}
+                                    >
+                                        View Submitted
+                                    </Button>
+                                </Paper>
+                            </Grid>
+                            
+                            <Grid item xs={12} md={4}>
+                                <Paper sx={{ 
+                                    p: 4, 
+                                    backgroundColor: '#1e293b', 
+                                    border: '1px solid #334155',
+                                    textAlign: 'center',
+                                    cursor: 'pointer',
+                                    '&:hover': { border: '2px solid #8b5cf6' }
+                                }}
+                                    onClick={() => setSelectedFilter('drafts')}
+                                >
+                                    <Edit sx={{ fontSize: 48, color: '#8b5cf6', mb: 2 }} />
+                                    <Typography variant="h5" sx={{ color: '#8b5cf6', fontWeight: 'bold', mb: 1 }}>
+                                        Draft Articles
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: '#94a3b8', mb: 2 }}>
+                                        Manage your draft articles ({drafts?.length || 0})
+                                    </Typography>
+                                    <Button
+                                        variant="outlined"
+                                        sx={{ 
+                                            color: '#8b5cf6',
+                                            borderColor: '#8b5cf6',
+                                            '&:hover': { borderColor: '#7c3aed', color: '#7c3aed' }
+                                        }}
+                                    >
+                                        View Drafts
+                                    </Button>
+                                </Paper>
+                            </Grid>
+                            
+                            <Grid item xs={12} md={4}>
+                                <Paper sx={{ 
+                                    p: 4, 
+                                    backgroundColor: '#1e293b', 
+                                    border: '1px solid #334155',
+                                    textAlign: 'center',
+                                    cursor: 'pointer',
+                                    '&:hover': { border: '2px solid #ef4444' }
+                                }}
+                                    onClick={() => router.get('/writer/revision')}
+                                >
+                                    <Refresh sx={{ fontSize: 48, color: '#ef4444', mb: 2 }} />
+                                    <Typography variant="h5" sx={{ color: '#ef4444', fontWeight: 'bold', mb: 1 }}>
+                                        Articles Needing Revision
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: '#94a3b8', mb: 2 }}>
+                                        Revise articles based on editor feedback ({needsRevision?.length || 0})
+                                    </Typography>
+                                    <Button
+                                        variant="outlined"
+                                        sx={{ 
+                                            color: '#ef4444',
+                                            borderColor: '#ef4444',
+                                            '&:hover': { borderColor: '#dc2626', color: '#dc2626' }
+                                        }}
+                                    >
+                                        View Revisions
+                                    </Button>
+                                </Paper>
+                            </Grid>
+                            
+                            <Grid item xs={12} md={4}>
+                                <Paper sx={{ 
+                                    p: 4, 
+                                    backgroundColor: '#1e293b', 
+                                    border: '1px solid #334155',
+                                    textAlign: 'center',
+                                    cursor: 'pointer',
+                                    '&:hover': { border: '2px solid #10b981' }
+                                }}
+                                    onClick={() => setSelectedFilter('published')}
+                                >
+                                    <Publish sx={{ fontSize: 48, color: '#10b981', mb: 2 }} />
+                                    <Typography variant="h5" sx={{ color: '#10b981', fontWeight: 'bold', mb: 1 }}>
+                                        Published Articles
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: '#94a3b8', mb: 2 }}>
+                                        View your published work ({published?.length || 0})
+                                    </Typography>
+                                    <Button
+                                        variant="outlined"
+                                        sx={{ 
+                                            color: '#10b981',
+                                            borderColor: '#10b981',
+                                            '&:hover': { borderColor: '#059669', color: '#059669' }
+                                        }}
+                                    >
+                                        View Published
+                                    </Button>
+                                </Paper>
+                            </Grid>
+                        </Grid>
+
+                        {/* Statistics Cards */}
+                        <Grid container spacing={3} sx={{ mb: 4 }}>
+                            <Grid item xs={12} md={3}>
+                                <Paper sx={{ 
+                                    p: 3, 
+                                    backgroundColor: '#1a1a2e', 
+                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                    textAlign: 'center',
+                                    backdropFilter: 'blur(10px)',
+                                    '&:hover': {
+                                        transform: 'translateY(-4px)',
+                                        boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3), 0 0 20px rgba(102, 126, 234, 0.1)',
+                                        borderColor: 'rgba(102, 126, 234, 0.3)'
+                                    }
+                                }}>
+                                    <Typography variant="h3" sx={{ color: '#8b5cf6', fontWeight: 'bold' }}>
+                                        {drafts?.length || 0}
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: '#cbd5e0' }}>
+                                        Drafts
+                                    </Typography>
+                                </Paper>
+                            </Grid>
+                            <Grid item xs={12} md={3}>
+                                <Paper sx={{ 
+                                    p: 3, 
+                                    backgroundColor: '#1a1a2e', 
+                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                    textAlign: 'center',
+                                    backdropFilter: 'blur(10px)',
+                                    '&:hover': {
+                                        transform: 'translateY(-4px)',
+                                        boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3), 0 0 20px rgba(102, 126, 234, 0.1)',
+                                        borderColor: 'rgba(102, 126, 234, 0.3)'
+                                    }
+                                }}>
+                                    <Typography variant="h3" sx={{ color: '#f59e0b', fontWeight: 'bold' }}>
+                                        {submitted?.length || 0}
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: '#cbd5e0' }}>
+                                        Submitted
+                                    </Typography>
+                                </Paper>
+                            </Grid>
+                            <Grid item xs={12} md={3}>
+                                <Paper sx={{ 
+                                    p: 3, 
+                                    backgroundColor: '#1a1a2e', 
+                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                    textAlign: 'center',
+                                    backdropFilter: 'blur(10px)',
+                                    '&:hover': {
+                                        transform: 'translateY(-4px)',
+                                        boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3), 0 0 20px rgba(102, 126, 234, 0.1)',
+                                        borderColor: 'rgba(102, 126, 234, 0.3)'
+                                    }
+                                }}>
+                                    <Typography variant="h3" sx={{ color: '#ef4444', fontWeight: 'bold' }}>
+                                        {needsRevision?.length || 0}
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: '#cbd5e0' }}>
+                                        Needs Revision
+                                    </Typography>
+                                </Paper>
+                            </Grid>
+                            <Grid item xs={12} md={3}>
+                                <Paper sx={{ 
+                                    p: 3, 
+                                    backgroundColor: '#1a1a2e', 
+                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                    textAlign: 'center',
+                                    backdropFilter: 'blur(10px)',
+                                    '&:hover': {
+                                        transform: 'translateY(-4px)',
+                                        boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3), 0 0 20px rgba(102, 126, 234, 0.1)',
+                                        borderColor: 'rgba(102, 126, 234, 0.3)'
+                                    }
+                                }}>
+                                    <Typography variant="h3" sx={{ color: '#10b981', fontWeight: 'bold' }}>
+                                        {published?.length || 0}
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: '#cbd5e0' }}>
+                                        Published
+                                    </Typography>
+                                </Paper>
+                            </Grid>
+                        </Grid>
+                        
+                        {/* Recent Activity */}
+                        <Paper sx={{ p: 4, backgroundColor: '#1e293b', border: '1px solid #334155', mt: 4 }}>
+                            <Typography variant="h5" sx={{ color: '#667eea', mb: 3, fontWeight: 'bold' }}>
+                                Recent Activity
+                            </Typography>
+                            <Grid container spacing={3}>
+                                <Grid item xs={12} md={6}>
+                                    <Typography variant="h6" sx={{ color: '#8b5cf6', mb: 2 }}>
+                                        Draft Articles
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+                                        {drafts?.length > 0 ? `${drafts.length} articles in progress` : 'No draft articles'}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <Typography variant="h6" sx={{ color: '#f59e0b', mb: 2 }}>
+                                        Under Review
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+                                        {submitted?.length > 0 ? `${submitted.length} articles under review` : 'No articles under review'}
+                                    </Typography>
+                                </Grid>
+                            </Grid>
+                        </Paper>
+                    </Box>
+                );
+            case 'drafts':
+                return (
+                    <Box>
+                        <Typography variant="h5" sx={{ color: '#8b5cf6', mb: 3, fontWeight: 'bold' }}>
+                            Draft Articles ({drafts?.length || 0})
+                        </Typography>
+                        {getFilteredArticles().map(article => (
+                            <ArticleCard 
+                                key={article.id}
+                                article={article}
+                                statusColor="#8b5cf6"
+                                onSubmit={handleSubmit}
+                                onEdit={handleEdit}
+                                onView={handleView}
+                                onDelete={handleDelete}
+                                canSubmit={true}
+                                canEdit={true}
+                                canDelete={true}
+                            />
+                        ))}
+                    </Box>
+                );
+            case 'submitted':
+                return (
+                    <Box>
+                        <Typography variant="h5" sx={{ color: '#f59e0b', mb: 3, fontWeight: 'bold' }}>
+                            Submitted Articles ({submitted?.length || 0})
+                        </Typography>
+                        {getFilteredArticles().map(article => (
+                            <ArticleCard 
+                                key={article.id}
+                                article={article}
+                                statusColor="#f59e0b"
+                                onSubmit={handleSubmit}
+                                onEdit={handleEdit}
+                                onView={handleView}
+                                onDelete={handleDelete}
+                                canSubmit={false}
+                                canEdit={false}
+                                canDelete={false}
+                            />
+                        ))}
+                    </Box>
+                );
+            case 'revision':
+                return (
+                    <Box>
+                        <Typography variant="h5" sx={{ color: '#ef4444', mb: 3, fontWeight: 'bold' }}>
+                            Articles Needing Revision ({needsRevision?.length || 0})
+                        </Typography>
+                        {getFilteredArticles().map(article => (
+                            <ArticleCard 
+                                key={article.id}
+                                article={article}
+                                statusColor="#ef4444"
+                                onSubmit={handleSubmit}
+                                onEdit={handleEdit}
+                                onView={handleView}
+                                onDelete={handleDelete}
+                                canSubmit={true}
+                                canEdit={true}
+                                canDelete={false}
+                            />
+                        ))}
+                    </Box>
+                );
+            case 'published':
+                return (
+                    <Box>
+                        <Typography variant="h5" sx={{ color: '#10b981', mb: 3, fontWeight: 'bold' }}>
+                            Published Articles ({published?.length || 0})
+                        </Typography>
+                        {getFilteredArticles().map(article => (
+                            <ArticleCard 
+                                key={article.id}
+                                article={article}
+                                statusColor="#10b981"
+                                onSubmit={handleSubmit}
+                                onEdit={handleEdit}
+                                onView={handleView}
+                                onDelete={handleDelete}
+                                canSubmit={false}
+                                canEdit={false}
+                                canDelete={false}
+                            />
+                        ))}
+                    </Box>
+                );
+            default:
+                return null;
         }
     };
 
     const ArticleCard = ({ article, statusColor, onSubmit, onEdit, onView, onDelete, canSubmit = true, canEdit = true, canDelete = true }) => (
-        <Card sx={{ mb: 3, backgroundColor: '#1e293b', border: '1px solid #334155' }}>
-            <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <Avatar sx={{ bgcolor: statusColor, mr: 2 }}>
+        <Card sx={{ 
+            mb: 3, 
+            backgroundColor: 'rgba(26, 26, 46, 0.8)', 
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: 3,
+            backdropFilter: 'blur(10px)',
+            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+            '&:hover': {
+                transform: 'translateY(-6px)',
+                borderColor: 'rgba(102, 126, 234, 0.3)',
+                boxShadow: '0 25px 50px rgba(0, 0, 0, 0.3), 0 0 30px rgba(102, 126, 234, 0.15)'
+            }
+        }}>
+            <CardContent sx={{ p: 4 }}>
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 3 }}>
+                    <Avatar sx={{ 
+                        bgcolor: statusColor, 
+                        mr: 3,
+                        width: 56,
+                        height: 56,
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)'
+                    }}>
                         {getStatusIcon(article.status)}
                     </Avatar>
                     <Box sx={{ flexGrow: 1 }}>
-                        <Typography variant="h6" sx={{ color: '#ffffff', mb: 1 }}>
+                        <Typography variant="h6" sx={{ 
+                            color: '#f7fafc', 
+                            mb: 2,
+                            fontWeight: 700,
+                            fontSize: '1.125rem',
+                            lineHeight: 1.4
+                        }}>
                             {article.title}
                         </Typography>
-                        <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
+                        <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
                             <Chip 
                                 label={article.status?.label || 'Unknown'}
                                 size="small"
-                                sx={{ bgcolor: statusColor, color: '#fff' }}
+                                sx={{ 
+                                    bgcolor: statusColor, 
+                                    color: '#fff',
+                                    fontWeight: 600,
+                                    fontSize: '0.75rem',
+                                    height: 28,
+                                    borderRadius: 6
+                                }}
                             />
-                            <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+                            <Typography variant="body2" sx={{ 
+                                color: '#cbd5e0',
+                                fontWeight: 500,
+                                display: 'flex',
+                                alignItems: 'center'
+                            }}>
                                 Category: {article.category?.name}
                             </Typography>
                         </Box>
                         {article.revisions?.length > 0 && (
-                            <Typography variant="body2" sx={{ color: '#94a3b8', mt: 1 }}>
-                                Latest feedback: "{article.revisions[0].comments}"
-                            </Typography>
+                            <Box sx={{ 
+                                mt: 2,
+                                p: 2,
+                                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                                borderRadius: 2,
+                                borderLeft: '3px solid #f6ad55'
+                            }}>
+                                <Typography variant="body2" sx={{ 
+                                    color: '#cbd5e0',
+                                    fontStyle: 'italic',
+                                    lineHeight: 1.5
+                                }}>
+                                    Latest feedback: "{article.revisions[0].comments}"
+                                </Typography>
+                            </Box>
                         )}
                     </Box>
                 </Box>
             </CardContent>
-            <CardActions sx={{ p: 2, pt: 0 }}>
+            <CardActions sx={{ p: 3, pt: 0, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                 {canSubmit && (
                     <Button 
                         size="small" 
                         onClick={() => onSubmit(article.id)}
-                        sx={{ color: '#f59e0b' }}
+                        variant="outlined"
+                        sx={{ 
+                            borderColor: '#f6ad55',
+                            color: '#f6ad55',
+                            fontWeight: 600,
+                            fontSize: '0.875rem',
+                            px: 3,
+                            py: 1,
+                            borderWidth: 2,
+                            borderRadius: 8,
+                            '&:hover': {
+                                borderColor: '#ed8936',
+                                backgroundColor: 'rgba(246, 173, 85, 0.1)',
+                                transform: 'translateY(-2px)'
+                            }
+                        }}
                     >
                         Submit
                     </Button>
@@ -278,25 +906,68 @@ const WriterDashboard = ({ drafts, submitted, needsRevision, published, categori
                     <Button 
                         size="small" 
                         onClick={() => onEdit(article.id)}
-                        sx={{ color: '#60a5fa' }}
+                        variant="outlined"
+                        sx={{ 
+                            borderColor: '#667eea',
+                            color: '#667eea',
+                            fontWeight: 600,
+                            fontSize: '0.875rem',
+                            px: 3,
+                            py: 1,
+                            borderWidth: 2,
+                            borderRadius: 8,
+                            '&:hover': {
+                                borderColor: '#5a67d8',
+                                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                                transform: 'translateY(-2px)'
+                            }
+                        }}
                     >
                         Edit
                     </Button>
                 )}
-                {onView && (
-                    <Button 
-                        size="small" 
-                        onClick={() => onView(article.id)}
-                        sx={{ color: '#10b981' }}
-                    >
-                        View
-                    </Button>
-                )}
+                <Button 
+                    size="small" 
+                    onClick={() => onView(article.id)}
+                    variant="outlined"
+                    sx={{ 
+                        borderColor: '#10b981',
+                        color: '#10b981',
+                        fontWeight: 600,
+                        fontSize: '0.875rem',
+                        px: 3,
+                        py: 1,
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        '&:hover': {
+                            borderColor: '#059669',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            transform: 'translateY(-2px)'
+                        }
+                    }}
+                >
+                    View
+                </Button>
                 {canDelete && (
                     <Button 
                         size="small" 
-                        onClick={() => onDelete(article)}
-                        sx={{ color: '#ef4444' }}
+                        onClick={() => onDelete(article.id)}
+                        variant="outlined"
+                        sx={{ 
+                            borderColor: '#ef4444',
+                            color: '#ef4444',
+                            fontWeight: 600,
+                            fontSize: '0.875rem',
+                            px: 3,
+                            py: 1,
+                            borderWidth: 2,
+                            borderRadius: 8,
+                            '&:hover': {
+                                borderColor: '#dc2626',
+                                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                transform: 'translateY(-2px)'
+                            }
+                        }}
                     >
                         Delete
                     </Button>
@@ -311,43 +982,45 @@ const WriterDashboard = ({ drafts, submitted, needsRevision, published, categori
             
             <Box sx={{ 
                 minHeight: "100vh", 
-                backgroundColor: "#0b1220",
+                backgroundColor: "#0f0f23",
                 display: 'flex',
-                flexDirection: 'column'
+                flexDirection: 'column',
+                background: 'radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.1) 0%, transparent 50%), #0f0f23'
             }}>
-                {/* Header - Same as Dashboard */}
+                {/* Header - Same as Student Dashboard */}
                 <Box sx={{ 
-                    backgroundColor: '#0f172a', 
-                    borderBottom: '1px solid #334155',
-                    p: 2,
+                    backgroundColor: 'rgba(26, 26, 46, 0.8)', 
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                    p: 3,
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'space-between'
+                    justifyContent: 'space-between',
+                    backdropFilter: 'blur(20px)'
                 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <IconButton component="a" href="/" sx={{ color: '#ffffff' }}>
-                            <ArrowBack />
-                        </IconButton>
-                        <Typography variant="h4" sx={{ color: '#ffffff', fontWeight: 'bold' }}>
+                    <Toolbar>
+                        <Typography variant="h4" sx={{ color: '#f7fafc', fontWeight: 800, letterSpacing: '-0.01em' }}>
                             Writer Dashboard
                         </Typography>
-                    </Box>
+                    </Toolbar>
                     
                     <IconButton color="inherit" onClick={handleMenuOpen} sx={{ color: '#ffffff' }}>
                         <MenuIcon />
                     </IconButton>
                 </Box>
 
-                {/* Menu - Same as Dashboard */}
+                {/* Menu - Same as Student Dashboard */}
                 <Menu
                     anchorEl={anchorEl}
                     open={Boolean(anchorEl)}
                     onClose={handleMenuClose}
                     PaperProps={{
                         sx: {
-                            backgroundColor: '#1e293b',
-                            color: '#ffffff',
-                            border: '1px solid #334155'
+                            backgroundColor: 'rgba(26, 26, 46, 0.95)',
+                            color: '#f7fafc',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            borderRadius: 3,
+                            backdropFilter: 'blur(20px)',
+                            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)'
                         }
                     }}
                 >
@@ -359,26 +1032,6 @@ const WriterDashboard = ({ drafts, submitted, needsRevision, published, categori
                     </MenuItem>
                     
                     <Divider sx={{ backgroundColor: '#334155' }} />
-                    <MenuItem onClick={() => { router.get('/writer/dashboard'); handleMenuClose(); }}>
-                        <ListItemIcon>
-                            <Edit sx={{ color: '#f59e0b' }} />
-                        </ListItemIcon>
-                        Switch to Writer
-                    </MenuItem>
-                    <MenuItem onClick={() => { router.get('/editor/dashboard'); handleMenuClose(); }}>
-                        <ListItemIcon>
-                            <RateReview sx={{ color: '#ef4444' }} />
-                        </ListItemIcon>
-                        Switch to Editor
-                    </MenuItem>
-                    <MenuItem onClick={() => { router.get('/student/dashboard'); handleMenuClose(); }}>
-                        <ListItemIcon>
-                            <Visibility sx={{ color: '#10b981' }} />
-                        </ListItemIcon>
-                        Switch to Student
-                    </MenuItem>
-                    
-                    <Divider sx={{ backgroundColor: '#334155' }} />
                     <MenuItem onClick={handleLogout}>
                         <ListItemIcon>
                             <Logout sx={{ color: '#f59e0b' }} />
@@ -387,745 +1040,68 @@ const WriterDashboard = ({ drafts, submitted, needsRevision, published, categori
                     </MenuItem>
                 </Menu>
 
-                {/* Main Content */}
-                <Box sx={{ flexGrow: 1, display: 'flex' }}>
-                    {/* Left Sidebar - Filter Buttons */}
-                    <Box sx={{ 
-                        width: 280,
-                        p: 2,
-                        backgroundColor: '#1e293b',
-                        border: '1px solid #334155',
-                        borderRadius: 2,
-                        mr: 2
-                    }}>
-                        <Typography variant="h6" sx={{ color: '#ffffff', mb: 3, fontWeight: 'bold' }}>
-                            Dashboard
-                        </Typography>
-                        
-                        <List sx={{ p: 0 }}>
-                            <ListItem 
-                                button 
-                                onClick={() => handleFilterClick('dashboard')}
-                                sx={{ 
-                                    mb: 1,
-                                    backgroundColor: selectedFilter === 'dashboard' ? '#60a5fa' : '#0f172a',
-                                    borderRadius: 2,
-                                    '&:hover': { backgroundColor: '#334155' }
-                                }}
-                            >
-                                <ListItemIcon>
-                                    <TrendingUp sx={{ color: selectedFilter === 'dashboard' ? '#fff' : '#60a5fa' }} />
-                                </ListItemIcon>
-                                <ListItemText 
-                                    primary="Dashboard" 
-                                    primaryTypographyProps={{ color: selectedFilter === 'dashboard' ? '#fff' : '#60a5fa', fontWeight: 'bold' }}
-                                />
-                            </ListItem>
-
-                            <ListItem 
-                                button 
-                                onClick={() => setShowCreateForm(!showCreateForm)}
-                                sx={{ 
-                                    mb: 1,
-                                    backgroundColor: showCreateForm ? '#60a5fa' : '#0f172a',
-                                    borderRadius: 2,
-                                    '&:hover': { backgroundColor: '#334155' }
-                                }}
-                            >
-                                <ListItemIcon>
-                                    <Create sx={{ color: showCreateForm ? '#fff' : '#60a5fa' }} />
-                                </ListItemIcon>
-                                <ListItemText 
-                                    primary="Create Article" 
-                                    primaryTypographyProps={{ color: showCreateForm ? '#fff' : '#60a5fa', fontWeight: 'bold' }}
-                                />
-                            </ListItem>
-
-                            <ListItem 
-                                button 
-                                onClick={() => handleFilterClick('drafts')}
-                                sx={{ 
-                                    mb: 1,
-                                    backgroundColor: selectedFilter === 'drafts' ? '#94a3b8' : '#0f172a',
-                                    borderRadius: 2,
-                                    '&:hover': { backgroundColor: '#334155' }
-                                }}
-                            >
-                                <ListItemIcon>
-                                    <Edit sx={{ color: selectedFilter === 'drafts' ? '#fff' : '#94a3b8' }} />
-                                </ListItemIcon>
-                                <ListItemText 
-                                    primary="My Drafts" 
-                                    primaryTypographyProps={{ color: selectedFilter === 'drafts' ? '#fff' : '#94a3b8', fontWeight: 'bold' }}
-                                />
-                            </ListItem>
-
-                            <ListItem 
-                                button 
-                                onClick={() => handleFilterClick('submitted')}
-                                sx={{ 
-                                    mb: 1,
-                                    backgroundColor: selectedFilter === 'submitted' ? '#f59e0b' : '#0f172a',
-                                    borderRadius: 2,
-                                    '&:hover': { backgroundColor: '#334155' }
-                                }}
-                            >
-                                <ListItemIcon>
-                                    <Send sx={{ color: selectedFilter === 'submitted' ? '#fff' : '#f59e0b' }} />
-                                </ListItemIcon>
-                                <ListItemText 
-                                    primary="Submitted" 
-                                    primaryTypographyProps={{ color: selectedFilter === 'submitted' ? '#fff' : '#f59e0b', fontWeight: 'bold' }}
-                                />
-                            </ListItem>
-
-                            <ListItem 
-                                button 
-                                onClick={() => handleFilterClick('revision')}
-                                sx={{ 
-                                    mb: 1,
-                                    backgroundColor: selectedFilter === 'revision' ? '#ef4444' : '#0f172a',
-                                    borderRadius: 2,
-                                    '&:hover': { backgroundColor: '#334155' }
-                                }}
-                            >
-                                <ListItemIcon>
-                                    <RateReview sx={{ color: selectedFilter === 'revision' ? '#fff' : '#ef4444' }} />
-                                </ListItemIcon>
-                                <ListItemText 
-                                    primary="Needs Revision" 
-                                    primaryTypographyProps={{ color: selectedFilter === 'revision' ? '#fff' : '#ef4444', fontWeight: 'bold' }}
-                                />
-                            </ListItem>
-
-                            <ListItem 
-                                button 
-                                onClick={() => handleFilterClick('published')}
-                                sx={{ 
-                                    mb: 1,
-                                    backgroundColor: selectedFilter === 'published' ? '#10b981' : '#0f172a',
-                                    borderRadius: 2,
-                                    '&:hover': { backgroundColor: '#334155' }
-                                }}
-                            >
-                                <ListItemIcon>
-                                    <Publish sx={{ color: selectedFilter === 'published' ? '#fff' : '#10b981' }} />
-                                </ListItemIcon>
-                                <ListItemText 
-                                    primary="Published" 
-                                    primaryTypographyProps={{ color: selectedFilter === 'published' ? '#fff' : '#10b981', fontWeight: 'bold' }}
-                                />
-                            </ListItem>
-                        </List>
-                    </Box>
-
-                    {/* Main Content Area */}
-                    <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-                        {/* Top Center - Numbers Display */}
-                        <Box sx={{ 
-                            display: 'flex', 
-                            justifyContent: 'center', 
-                            mb: 3,
-                            gap: 3
-                        }}>
-                            <Paper sx={{ 
-                                p: 2, 
-                                backgroundColor: '#1e293b', 
-                                border: '1px solid #334155',
-                                textAlign: 'center',
-                                minWidth: 120
-                            }}>
-                                <Typography variant="h3" sx={{ color: '#94a3b8', fontWeight: 'bold' }}>
-                                    {drafts?.length || 0}
-                                </Typography>
-                                <Typography variant="body2" sx={{ color: '#94a3b8' }}>
-                                    Drafts
-                                </Typography>
-                            </Paper>
-                            <Paper sx={{ 
-                                p: 2, 
-                                backgroundColor: '#1e293b', 
-                                border: '1px solid #334155',
-                                textAlign: 'center',
-                                minWidth: 120
-                            }}>
-                                <Typography variant="h3" sx={{ color: '#f59e0b', fontWeight: 'bold' }}>
-                                    {submitted?.length || 0}
-                                </Typography>
-                                <Typography variant="body2" sx={{ color: '#94a3b8' }}>
-                                    Submitted
-                                </Typography>
-                            </Paper>
-                            <Paper sx={{ 
-                                p: 2, 
-                                backgroundColor: '#1e293b', 
-                                border: '1px solid #334155',
-                                textAlign: 'center',
-                                minWidth: 120
-                            }}>
-                                <Typography variant="h3" sx={{ color: '#ef4444', fontWeight: 'bold' }}>
-                                    {needsRevision?.length || 0}
-                                </Typography>
-                                <Typography variant="body2" sx={{ color: '#94a3b8' }}>
-                                    Revision
-                                </Typography>
-                            </Paper>
-                            <Paper sx={{ 
-                                p: 2, 
-                                backgroundColor: '#1e293b', 
-                                border: '1px solid #334155',
-                                textAlign: 'center',
-                                minWidth: 120
-                            }}>
-                                <Typography variant="h3" sx={{ color: '#10b981', fontWeight: 'bold' }}>
-                                    {published?.length || 0}
-                                </Typography>
-                                <Typography variant="body2" sx={{ color: '#94a3b8' }}>
-                                    Published
-                                </Typography>
-                            </Paper>
-                        </Box>
-
-                        
-                        {/* Flash Messages */}
-                        {flash?.success && (
-                            <Box sx={{ mb: 3 }}>
-                                <Paper sx={{ p: 2, backgroundColor: '#10b981', color: '#fff' }}>
-                                    <Typography>{flash.success}</Typography>
-                                </Paper>
-                            </Box>
-                        )}
-
-                        {/* Create Article Form */}
-                        {showCreateForm && (
-                            <Paper sx={{ p: 4, backgroundColor: '#1e293b', border: '1px solid #334155', mb: 3 }}>
-                                <Typography variant="h5" sx={{ color: '#60a5fa', mb: 3, fontWeight: 'bold' }}>
-                                    Create New Article
-                                </Typography>
-                                <form onSubmit={handleSubmit}>
-                                    <Grid container spacing={3}>
-                                        <Grid item xs={12} md={6}>
-                                            <TextField
-                                                fullWidth
-                                                label="Article Title"
-                                                value={formData.title}
-                                                onChange={(e) => handleInputChange('title', e.target.value)}
-                                                required
-                                                sx={{ 
-                                                    '& .MuiOutlinedInput-root': {
-                                                        '& fieldset': {
-                                                            borderColor: '#334155',
-                                                        },
-                                                        '&:hover fieldset': {
-                                                            borderColor: '#60a5fa',
-                                                        },
-                                                        '&.Mui-focused fieldset': {
-                                                            borderColor: '#60a5fa',
-                                                        },
-                                                    },
-                                                    '& .MuiInputLabel-root': {
-                                                        color: '#94a3b8',
-                                                    },
-                                                    '& .MuiInputLabel-focused': {
-                                                        color: '#60a5fa',
-                                                    }
-                                                }}
-                                            />
-                                        </Grid>
-                                        <Grid item xs={12} md={6}>
-                                            <FormControl fullWidth required>
-                                                <InputLabel sx={{ color: '#94a3b8' }}>Category</InputLabel>
-                                                <Select
-                                                    value={formData.category_id}
-                                                    onChange={(e) => handleInputChange('category_id', e.target.value)}
-                                                    sx={{ 
-                                                        '& .MuiOutlinedInput-notchedOutline': {
-                                                            borderColor: '#334155',
-                                                        },
-                                                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                                                            borderColor: '#60a5fa',
-                                                        },
-                                                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                                            borderColor: '#60a5fa',
-                                                        },
-                                                        '& .MuiSvgIcon-root': {
-                                                            color: '#94a3b8',
-                                                        }
-                                                    }}
-                                                >
-                                                    {categories.map((category) => (
-                                                        <SelectMenuItem key={category.id} value={category.id}>
-                                                            {category.name}
-                                                        </SelectMenuItem>
-                                                    ))}
-                                                </Select>
-                                            </FormControl>
-                                        </Grid>
-                                        <Grid item xs={12}>
-                                            <Typography variant="subtitle1" sx={{ color: '#ffffff', mb: 2 }}>
-                                                Content
-                                            </Typography>
-                                            <Box sx={{ 
-                                                border: '1px solid #334155',
-                                                borderRadius: 1,
-                                                '& .jodit-container': {
-                                                    backgroundColor: '#0f172a !important',
-                                                }
-                                            }}>
-                                                <JoditEditorComponent
-                                                    value={formData.content}
-                                                    onChange={handleContentChange}
-                                                    placeholder="Write your article content here..."
-                                                />
-                                            </Box>
-                                        </Grid>
-                                        <Grid item xs={12}>
-                                            <Button
-                                                type="submit"
-                                                variant="contained"
-                                                startIcon={<Create />}
-                                                sx={{ 
-                                                    mr: 2,
-                                                    bgcolor: '#60a5fa',
-                                                    '&:hover': { bgcolor: '#3b82f6' }
-                                                }}
-                                            >
-                                                Create Article
-                                            </Button>
-                                            <Button
-                                                onClick={() => setShowCreateForm(false)}
-                                                variant="outlined"
-                                                sx={{ 
-                                                    color: '#94a3b8',
-                                                    borderColor: '#334155',
-                                                    '&:hover': { borderColor: '#60a5fa', color: '#60a5fa' }
-                                                }}
-                                            >
-                                                Cancel
-                                            </Button>
-                                        </Grid>
-                                    </Grid>
-                                </form>
-                            </Paper>
-                        )}
-
-                        {/* Right Side - Articles Display */}
-                        <Box sx={{ flexGrow: 1 }}>
-                            {selectedFilter === 'dashboard' ? (
-                                // Dashboard Overview
-                                <Box>
-                                    <Typography variant="h5" sx={{ color: '#60a5fa', mb: 3, fontWeight: 'bold' }}>
-                                        Writer Dashboard Overview
-                                    </Typography>
-                                    
-                                    {/* Statistics Cards */}
-                                    <Grid container spacing={3} sx={{ mb: 4 }}>
-                                        <Grid item xs={12} md={3}>
-                                            <Paper sx={{ 
-                                                p: 3, 
-                                                backgroundColor: '#1e293b', 
-                                                border: '1px solid #334155',
-                                                textAlign: 'center'
-                                            }}>
-                                                <Typography variant="h3" sx={{ color: '#94a3b8', fontWeight: 'bold' }}>
-                                                    {drafts?.length || 0}
-                                                </Typography>
-                                                <Typography variant="body2" sx={{ color: '#94a3b8' }}>
-                                                    Drafts
-                                                </Typography>
-                                            </Paper>
-                                        </Grid>
-                                        <Grid item xs={12} md={3}>
-                                            <Paper sx={{ 
-                                                p: 3, 
-                                                backgroundColor: '#1e293b', 
-                                                border: '1px solid #334155',
-                                                textAlign: 'center'
-                                            }}>
-                                                <Typography variant="h3" sx={{ color: '#f59e0b', fontWeight: 'bold' }}>
-                                                    {submitted?.length || 0}
-                                                </Typography>
-                                                <Typography variant="body2" sx={{ color: '#94a3b8' }}>
-                                                    Submitted
-                                                </Typography>
-                                            </Paper>
-                                        </Grid>
-                                        <Grid item xs={12} md={3}>
-                                            <Paper sx={{ 
-                                                p: 3, 
-                                                backgroundColor: '#1e293b', 
-                                                border: '1px solid #334155',
-                                                textAlign: 'center'
-                                            }}>
-                                                <Typography variant="h3" sx={{ color: '#ef4444', fontWeight: 'bold' }}>
-                                                    {needsRevision?.length || 0}
-                                                </Typography>
-                                                <Typography variant="body2" sx={{ color: '#94a3b8' }}>
-                                                    Needs Revision
-                                                </Typography>
-                                            </Paper>
-                                        </Grid>
-                                        <Grid item xs={12} md={3}>
-                                            <Paper sx={{ 
-                                                p: 3, 
-                                                backgroundColor: '#1e293b', 
-                                                border: '1px solid #334155',
-                                                textAlign: 'center'
-                                            }}>
-                                                <Typography variant="h3" sx={{ color: '#10b981', fontWeight: 'bold' }}>
-                                                    {published?.length || 0}
-                                                </Typography>
-                                                <Typography variant="body2" sx={{ color: '#94a3b8' }}>
-                                                    Published
-                                                </Typography>
-                                            </Paper>
-                                        </Grid>
-                                    </Grid>
-
-                                    {/* Quick Access Cards */}
-                                    <Grid container spacing={3}>
-                                        <Grid item xs={12} md={6}>
-                                            <Paper sx={{ 
-                                                p: 4, 
-                                                backgroundColor: '#1e293b', 
-                                                border: '1px solid #334155',
-                                                textAlign: 'center',
-                                                cursor: 'pointer',
-                                                '&:hover': { border: '2px solid #60a5fa' }
-                                            }}
-                                                onClick={() => handleFilterClick('drafts')}
-                                            >
-                                                <Edit sx={{ fontSize: 48, color: '#94a3b8', mb: 2 }} />
-                                                <Typography variant="h5" sx={{ color: '#94a3b8', fontWeight: 'bold', mb: 1 }}>
-                                                    My Drafts
-                                                </Typography>
-                                                <Typography variant="body2" sx={{ color: '#94a3b8', mb: 2 }}>
-                                                    Manage your draft articles
-                                                </Typography>
-                                                <Button
-                                                    variant="outlined"
-                                                    sx={{ 
-                                                        color: '#94a3b8',
-                                                        borderColor: '#94a3b8',
-                                                        '&:hover': { borderColor: '#60a5fa', color: '#60a5fa' }
-                                                    }}
-                                                >
-                                                    View Drafts
-                                                </Button>
-                                            </Paper>
-                                        </Grid>
-                                        
-                                        <Grid item xs={12} md={6}>
-                                            <Paper sx={{ 
-                                                p: 4, 
-                                                backgroundColor: '#1e293b', 
-                                                border: '1px solid #334155',
-                                                textAlign: 'center',
-                                                cursor: 'pointer',
-                                                '&:hover': { border: '2px solid #f59e0b' }
-                                            }}
-                                                onClick={() => handleFilterClick('submitted')}
-                                            >
-                                                <Send sx={{ fontSize: 48, color: '#f59e0b', mb: 2 }} />
-                                                <Typography variant="h5" sx={{ color: '#f59e0b', fontWeight: 'bold', mb: 1 }}>
-                                                    Submitted Articles
-                                                </Typography>
-                                                <Typography variant="body2" sx={{ color: '#94a3b8', mb: 2 }}>
-                                                    Track submitted articles
-                                                </Typography>
-                                                <Button
-                                                    variant="outlined"
-                                                    sx={{ 
-                                                        color: '#f59e0b',
-                                                        borderColor: '#f59e0b',
-                                                        '&:hover': { borderColor: '#d97706', color: '#d97706' }
-                                                    }}
-                                                >
-                                                    View Submitted
-                                                </Button>
-                                            </Paper>
-                                        </Grid>
-                                        
-                                        <Grid item xs={12} md={6}>
-                                            <Paper sx={{ 
-                                                p: 4, 
-                                                backgroundColor: '#1e293b', 
-                                                border: '1px solid #334155',
-                                                textAlign: 'center',
-                                                cursor: 'pointer',
-                                                '&:hover': { border: '2px solid #ef4444' }
-                                            }}
-                                                onClick={() => handleFilterClick('revision')}
-                                            >
-                                                <RateReview sx={{ fontSize: 48, color: '#ef4444', mb: 2 }} />
-                                                <Typography variant="h5" sx={{ color: '#ef4444', fontWeight: 'bold', mb: 1 }}>
-                                                    Needs Revision
-                                                </Typography>
-                                                <Typography variant="body2" sx={{ color: '#94a3b8', mb: 2 }}>
-                                                    Articles requiring revisions
-                                                </Typography>
-                                                <Button
-                                                    variant="outlined"
-                                                    sx={{ 
-                                                        color: '#ef4444',
-                                                        borderColor: '#ef4444',
-                                                        '&:hover': { borderColor: '#dc2626', color: '#dc2626' }
-                                                    }}
-                                                >
-                                                    View Revisions
-                                                </Button>
-                                            </Paper>
-                                        </Grid>
-                                        
-                                        <Grid item xs={12} md={6}>
-                                            <Paper sx={{ 
-                                                p: 4, 
-                                                backgroundColor: '#1e293b', 
-                                                border: '1px solid #334155',
-                                                textAlign: 'center',
-                                                cursor: 'pointer',
-                                                '&:hover': { border: '2px solid #10b981' }
-                                            }}
-                                                onClick={() => handleFilterClick('published')}
-                                            >
-                                                <Publish sx={{ fontSize: 48, color: '#10b981', mb: 2 }} />
-                                                <Typography variant="h5" sx={{ color: '#10b981', fontWeight: 'bold', mb: 1 }}>
-                                                    Published Articles
-                                                </Typography>
-                                                <Typography variant="body2" sx={{ color: '#94a3b8', mb: 2 }}>
-                                                    View your published work
-                                                </Typography>
-                                                <Button
-                                                    variant="outlined"
-                                                    sx={{ 
-                                                        color: '#10b981',
-                                                        borderColor: '#10b981',
-                                                        '&:hover': { borderColor: '#059669', color: '#059669' }
-                                                    }}
-                                                >
-                                                    View Published
-                                                </Button>
-                                            </Paper>
-                                        </Grid>
-                                    </Grid>
-                                </Box>
-                            ) : (
-                                // Create Article Form
-                                showCreateForm ? (
-                                    <Paper sx={{ p: 4, backgroundColor: '#1e293b', border: '1px solid #334155', mb: 3 }}>
-                                        <Typography variant="h5" sx={{ color: '#60a5fa', mb: 3, fontWeight: 'bold' }}>
-                                            Create New Article
-                                        </Typography>
-                                        <form onSubmit={handleSubmit}>
-                                            <Grid container spacing={3}>
-                                                <Grid item xs={12} md={6}>
-                                                    <TextField
-                                                        fullWidth
-                                                        label="Article Title"
-                                                        value={formData.title}
-                                                        onChange={(e) => handleInputChange('title', e.target.value)}
-                                                        required
-                                                        sx={{ 
-                                                            '& .MuiOutlinedInput-root': {
-                                                                '& fieldset': {
-                                                                    borderColor: '#334155',
-                                                                },
-                                                                '&:hover fieldset': {
-                                                                    borderColor: '#60a5fa',
-                                                                },
-                                                                '&.Mui-focused fieldset': {
-                                                                    borderColor: '#60a5fa',
-                                                                },
-                                                            },
-                                                            '& .MuiInputLabel-root': {
-                                                                color: '#94a3b8',
-                                                            },
-                                                            '& .MuiInputLabel-focused': {
-                                                                color: '#60a5fa',
-                                                            }
-                                                        }}
-                                                    />
-                                                </Grid>
-                                                <Grid item xs={12} md={6}>
-                                                    <FormControl fullWidth>
-                                                        <InputLabel sx={{ color: '#94a3b8' }}>Category</InputLabel>
-                                                        <Select
-                                                            value={formData.category_id}
-                                                            label="Category"
-                                                            onChange={(e) => handleInputChange('category_id', e.target.value)}
-                                                            sx={{ 
-                                                                '& .MuiOutlinedInput-notchedOutline': {
-                                                                    borderColor: '#334155',
-                                                                },
-                                                                '&:hover .MuiOutlinedInput-notchedOutline': {
-                                                                    borderColor: '#60a5fa',
-                                                                },
-                                                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                                                    borderColor: '#60a5fa',
-                                                                },
-                                                                '& .MuiInputLabel-root': {
-                                                                    color: '#94a3b8',
-                                                                },
-                                                                '& .MuiInputLabel-focused': {
-                                                                    color: '#60a5fa',
-                                                                },
-                                                                '& .MuiSvgIcon-root': {
-                                                                    color: '#94a3b8',
-                                                                }
-                                                            }}
-                                                        >
-                                                            {categories.map((category) => (
-                                                                <SelectMenuItem key={category.id} value={category.id}>
-                                                                    {category.name}
-                                                                </SelectMenuItem>
-                                                            ))}
-                                                        </Select>
-                                                    </FormControl>
-                                                </Grid>
-                                                <Grid item xs={12}>
-                                                    <Typography variant="subtitle1" sx={{ color: '#ffffff', mb: 2 }}>
-                                                        Content
-                                                    </Typography>
-                                                    <Box sx={{ 
-                                                        border: '1px solid #334155',
-                                                        borderRadius: 1,
-                                                        '& .jodit-container': {
-                                                            backgroundColor: '#0f172a !important',
-                                                        }
-                                                    }}>
-                                                        <JoditEditorComponent
-                                                            value={formData.content}
-                                                            onChange={handleContentChange}
-                                                            placeholder="Write your article content here..."
-                                                        />
-                                                    </Box>
-                                                </Grid>
-                                                <Grid item xs={12}>
-                                                    <Button
-                                                        type="submit"
-                                                        variant="contained"
-                                                        startIcon={<Create />}
-                                                        sx={{ 
-                                                            mr: 2,
-                                                            bgcolor: '#60a5fa',
-                                                            '&:hover': { bgcolor: '#3b82f6' }
-                                                        }}
-                                                    >
-                                                        Create Article
-                                                    </Button>
-                                                    <Button
-                                                        onClick={() => setShowCreateForm(false)}
-                                                        variant="outlined"
-                                                        sx={{ 
-                                                            color: '#94a3b8',
-                                                            borderColor: '#334155',
-                                                            '&:hover': { borderColor: '#60a5fa', color: '#60a5fa' }
-                                                        }}
-                                                    >
-                                                        Cancel
-                                                    </Button>
-                                                </Grid>
-                                            </Grid>
-                                        </form>
-                                    </Paper>
-                                ) : (
-                                    // Regular Article Lists
-                                    <>
-                                        <Typography variant="h5" sx={{ color: getFilterColor(), mb: 2, fontWeight: 'bold' }}>
-                                            {getFilterTitle()} ({getFilteredArticles().length})
-                                        </Typography>
-                                        
-                                        {getFilteredArticles().length === 0 ? (
-                                            <Paper sx={{ p: 4, backgroundColor: '#1e293b', border: '1px solid #334155', textAlign: 'center' }}>
-                                                <Typography sx={{ color: '#94a3b8' }}>
-                                                    No {getFilterTitle().toLowerCase()}
-                                                </Typography>
-                                            </Paper>
-                                        ) : (
-                                            <Box>
-                                                {getFilteredArticles().map((article, index) => (
-                                                    <Box key={article.id} sx={{ mb: 2 }}>
-                                                        <Typography variant="h6" sx={{ color: getFilterColor(), mb: 1 }}>
-                                                            Article {index + 1}
-                                                        </Typography>
-                                                        <ArticleCard
-                                                            article={article}
-                                                            statusColor={getStatusColor(article.status)}
-                                                            onSubmit={handleSubmitArticle}
-                                                            onEdit={handleOpenArticle}
-                                                            onDelete={handleDeleteArticle}
-                                                            canSubmit={selectedFilter === 'drafts'}
-                                                            canEdit={selectedFilter === 'drafts' || selectedFilter === 'revision'}
-                                                            canDelete={selectedFilter !== 'published'}
-                                                            onView={selectedFilter === 'published' ? handleViewPublished : undefined}
-                                                        />
-                                                    </Box>
-                                                ))}
-                                            </Box>
-                                        )}
-                                    </>
-                                )
-                            )}
-                        </Box>
-
-                {/* Profile Dialog */}
-                <Dialog open={profileDialog} onClose={handleProfileClose} maxWidth="sm" fullWidth>
-                    <DialogTitle sx={{ backgroundColor: '#1e293b', color: '#ffffff', borderBottom: '1px solid #334155' }}>
-                        Writer Profile
-                    </DialogTitle>
-                    <DialogContent sx={{ backgroundColor: '#1e293b', color: '#ffffff' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, mt: 2 }}>
-                            <Avatar sx={{ width: 64, height: 64, bgcolor: '#f59e0b', mr: 3 }}>
-                                {auth?.user?.name?.charAt(0) || 'W'}
-                            </Avatar>
-                            <Box>
-                                <Typography variant="h6" sx={{ color: '#ffffff', mb: 0.5 }}>
-                                    {auth?.user?.name || 'Unknown Writer'}
-                                </Typography>
-                                <Typography variant="body2" sx={{ color: '#94a3b8' }}>
-                                    {auth?.user?.email || 'No email'}
-                                </Typography>
-                                <Typography variant="body2" sx={{ color: '#94a3b8', mt: 1 }}>
-                                    Role: Writer
-                                </Typography>
-                            </Box>
-                        </Box>
-                        
-                        <Divider sx={{ backgroundColor: '#334155', mb: 3 }} />
-                        
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                            <Box>
-                                <Typography variant="body2" sx={{ color: '#94a3b8', mb: 1 }}>
-                                    Total Articles: {drafts?.length + submitted?.length + needsRevision?.length + published?.length || 0}
-                                </Typography>
-                                <Typography variant="body2" sx={{ color: '#94a3b8', mb: 1 }}>
-                                    Published: {published?.length || 0}
-                                </Typography>
-                                <Typography variant="body2" sx={{ color: '#94a3b8' }}>
-                                    Member since: {new Date(auth?.user?.created_at).toLocaleDateString()}
-                                </Typography>
-                            </Box>
-                        </Box>
-                    </DialogContent>
-                    <DialogActions sx={{ backgroundColor: '#1e293b', p: 3 }}>
-                        <Button onClick={handleProfileClose} sx={{ color: '#94a3b8' }}>
-                            Close
-                        </Button>
-                        <Button 
-                            onClick={() => router.get('/profile.edit')}
-                            variant="contained"
+                {/* Hero Section */}
+                <Box sx={{
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
+                    py: 8,
+                    px: 3,
+                    position: 'relative',
+                    overflow: 'hidden',
+                    '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.08"%3E%3Ccircle cx="30" cy="30" r="4"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+                        opacity: 0.4
+                    },
+                    '&::after': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgba(255, 255, 255, 0.05) 0%, transparent 50%)',
+                        opacity: 0.6
+                    }
+                }}>
+                    <Box sx={{ position: 'relative', zIndex: 1, maxWidth: '1200px', mx: 'auto', textAlign: 'center' }}>
+                        <Typography 
+                            variant="h2" 
                             sx={{ 
-                                bgcolor: '#60a5fa', 
-                                color: '#fff',
-                                '&:hover': { bgcolor: '#3b82f6' }
+                                color: '#ffffff', 
+                                fontWeight: 700,
+                                mb: 2,
+                                fontSize: { xs: '2rem', md: '3rem' },
+                                textShadow: '0 2px 4px rgba(0,0,0,0.1)'
                             }}
                         >
-                            Edit Profile
-                        </Button>
-                    </DialogActions>
-                </Dialog>
+                            Creative Writing Hub
+                        </Typography>
+                        <Typography 
+                            variant="h6" 
+                            sx={{ 
+                                color: 'rgba(255,255,255,0.9)', 
+                                mb: 4,
+                                maxWidth: '600px',
+                                mx: 'auto',
+                                lineHeight: 1.6
+                            }}
+                        >
+                            Craft compelling stories, share your ideas, and connect with readers. Your writing journey starts here.
+                        </Typography>
+                        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+                        </Box>
                     </Box>
                 </Box>
+
+                {/* Main Content */}
+                <Container maxWidth="lg" sx={{ flexGrow: 1, py: 4 }}>
+                    {getFilteredContent()}
+                </Container>
             </Box>
         </ThemeProvider>
     );

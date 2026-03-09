@@ -18,11 +18,11 @@ import {
     Grid,
     List,
     ListItem,
-    ListItemText
+    ListItemText,
+    Toolbar
 } from '@mui/material';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import {
-    ArrowBack,
     Person,
     Logout,
     Menu as MenuIcon,
@@ -42,16 +42,219 @@ const StudentDashboard = ({ publishedArticles, myComments, stats, favorites }) =
 
     const { auth } = usePage().props;
 
-    // Theme from Login.jsx - same as Dashboard
+    // Professional Theme with enhanced styling
     const theme = createTheme({
         palette: {
             mode: "dark",
-            background: { default: "#0b1220", paper: "#0f172a" },
-            primary: { main: "#60a5fa" },
-            secondary: { main: "#22d3ee" },
-            text: { primary: "#ffffff" }
+            background: { 
+                default: "#0f0f23",
+                paper: "#1a1a2e"
+            },
+            primary: { 
+                main: "#10b981",
+                light: "#34d399",
+                dark: "#059669"
+            },
+            secondary: { 
+                main: "#06b6d4",
+                light: "#22d3ee",
+                dark: "#0891b2"
+            },
+            success: { 
+                main: "#48bb78",
+                light: "#68d391",
+                dark: "#38a169"
+            },
+            warning: { 
+                main: "#ed8936",
+                light: "#f6ad55",
+                dark: "#dd6b20"
+            },
+            error: { 
+                main: "#f56565",
+                light: "#fc8181",
+                dark: "#e53e3e"
+            },
+            info: { 
+                main: "#4299e1",
+                light: "#63b3ed",
+                dark: "#3182ce"
+            },
+            text: { 
+                primary: "#f7fafc",
+                secondary: "#cbd5e0",
+                disabled: "#718096"
+            },
+            divider: "#2d3748"
         },
-        typography: { fontFamily: '"Times New Roman", Times, serif' }
+        typography: { 
+            fontFamily: '"Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            h1: {
+                fontWeight: 800,
+                fontSize: '2.5rem',
+                lineHeight: 1.2,
+                letterSpacing: '-0.02em'
+            },
+            h2: {
+                fontWeight: 700,
+                fontSize: '2rem',
+                lineHeight: 1.3,
+                letterSpacing: '-0.01em'
+            },
+            h3: {
+                fontWeight: 600,
+                fontSize: '1.75rem',
+                lineHeight: 1.4
+            },
+            h4: { 
+                fontWeight: 600,
+                fontSize: '1.5rem',
+                lineHeight: 1.4
+            },
+            h5: { 
+                fontWeight: 600,
+                fontSize: '1.25rem',
+                lineHeight: 1.5
+            },
+            h6: { 
+                fontWeight: 600,
+                fontSize: '1.125rem',
+                lineHeight: 1.5
+            },
+            body1: {
+                fontSize: '1rem',
+                lineHeight: 1.6,
+                fontWeight: 400
+            },
+            body2: {
+                fontSize: '0.875rem',
+                lineHeight: 1.5,
+                fontWeight: 400
+            },
+            subtitle1: {
+                fontSize: '1rem',
+                lineHeight: 1.5,
+                fontWeight: 500
+            },
+            subtitle2: {
+                fontSize: '0.875rem',
+                lineHeight: 1.5,
+                fontWeight: 500
+            }
+        },
+        shape: {
+            borderRadius: 12
+        },
+        spacing: 8,
+        components: {
+            MuiPaper: {
+                styleOverrides: {
+                    root: {
+                        backgroundImage: 'none',
+                        backgroundColor: '#1a1a2e',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                        backdropFilter: 'blur(10px)',
+                        '&:hover': {
+                            transform: 'translateY(-4px)',
+                            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3), 0 0 20px rgba(16, 185, 129, 0.1)',
+                            borderColor: 'rgba(16, 185, 129, 0.3)'
+                        }
+                    }
+                }
+            },
+            MuiButton: {
+                styleOverrides: {
+                    root: {
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        fontSize: '0.875rem',
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        borderRadius: 10,
+                        padding: '10px 24px',
+                        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                        '&:hover': {
+                            transform: 'translateY(-2px)',
+                            boxShadow: '0 8px 12px rgba(0, 0, 0, 0.2)'
+                        },
+                        '&:active': {
+                            transform: 'translateY(0)'
+                        }
+                    },
+                    contained: {
+                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                        '&:hover': {
+                            background: 'linear-gradient(135deg, #059669 0%, #047857 100%)'
+                        }
+                    },
+                    outlined: {
+                        borderWidth: 2,
+                        '&:hover': {
+                            borderWidth: 2
+                        }
+                    }
+                }
+            },
+            MuiCard: {
+                styleOverrides: {
+                    root: {
+                        backgroundColor: '#1a1a2e',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                        backdropFilter: 'blur(10px)',
+                        '&:hover': {
+                            transform: 'translateY(-6px)',
+                            boxShadow: '0 25px 50px rgba(0, 0, 0, 0.3), 0 0 30px rgba(16, 185, 129, 0.15)',
+                            borderColor: 'rgba(16, 185, 129, 0.4)'
+                        }
+                    }
+                }
+            },
+            MuiIconButton: {
+                styleOverrides: {
+                    root: {
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        borderRadius: 10,
+                        '&:hover': {
+                            transform: 'scale(1.05)',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)'
+                        }
+                    }
+                }
+            },
+            MuiChip: {
+                styleOverrides: {
+                    root: {
+                        fontWeight: 600,
+                        fontSize: '0.75rem',
+                        borderRadius: 6,
+                        height: 28
+                    }
+                }
+            },
+            MuiListItem: {
+                styleOverrides: {
+                    root: {
+                        borderRadius: 8,
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)'
+                        }
+                    }
+                }
+            },
+            MuiDialog: {
+                styleOverrides: {
+                    paper: {
+                        backgroundColor: '#1a1a2e',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        borderRadius: 16,
+                        backdropFilter: 'blur(20px)'
+                    }
+                }
+            }
+        }
     });
 
     const handleMenuOpen = (event) => {
@@ -549,31 +752,26 @@ const StudentDashboard = ({ publishedArticles, myComments, stats, favorites }) =
             
             <Box sx={{ 
                 minHeight: "100vh", 
-                backgroundColor: "#0b1220",
+                backgroundColor: "#0f0f23",
                 display: 'flex',
-                flexDirection: 'column'
+                flexDirection: 'column',
+                background: 'radial-gradient(circle at 20% 50%, rgba(16, 185, 129, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(6, 182, 212, 0.1) 0%, transparent 50%), #0f0f23'
             }}>
                 {/* Header - Same as Dashboard */}
                 <Box sx={{ 
-                    backgroundColor: '#0f172a', 
-                    borderBottom: '1px solid #334155',
-                    p: 2,
+                    backgroundColor: 'rgba(26, 26, 46, 0.8)', 
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                    p: 3,
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'space-between'
+                    justifyContent: 'space-between',
+                    backdropFilter: 'blur(20px)'
                 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <IconButton 
-                            component="a" 
-                            href="/" 
-                            sx={{ color: '#ffffff' }}
-                        >
-                            <ArrowBack />
-                        </IconButton>
-                        <Typography variant="h4" sx={{ color: '#ffffff', fontWeight: 'bold' }}>
+                    <Toolbar>
+                        <Typography variant="h4" sx={{ color: '#f7fafc', fontWeight: 800, letterSpacing: '-0.01em' }}>
                             Student Dashboard
                         </Typography>
-                    </Box>
+                    </Toolbar>
                     
                     <IconButton color="inherit" onClick={handleMenuOpen} sx={{ color: '#ffffff' }}>
                         <MenuIcon />
@@ -587,37 +785,20 @@ const StudentDashboard = ({ publishedArticles, myComments, stats, favorites }) =
                     onClose={handleMenuClose}
                     PaperProps={{
                         sx: {
-                            backgroundColor: '#1e293b',
-                            color: '#ffffff',
-                            border: '1px solid #334155'
+                            backgroundColor: 'rgba(26, 26, 46, 0.95)',
+                            color: '#f7fafc',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            borderRadius: 3,
+                            backdropFilter: 'blur(20px)',
+                            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)'
                         }
                     }}
                 >
-                    <MenuItem onClick={() => { router.get('/profile.edit'); handleMenuClose(); }}>
+                    <MenuItem onClick={() => { router.get('/profile'); handleMenuClose(); }}>
                         <ListItemIcon>
                             <Person sx={{ color: '#60a5fa' }} />
                         </ListItemIcon>
                         Profile
-                    </MenuItem>
-                    
-                    <Divider sx={{ backgroundColor: '#334155' }} />
-                    <MenuItem onClick={() => { router.get('/writer/dashboard'); handleMenuClose(); }}>
-                        <ListItemIcon>
-                            <Edit sx={{ color: '#f59e0b' }} />
-                        </ListItemIcon>
-                        Switch to Writer
-                    </MenuItem>
-                    <MenuItem onClick={() => { router.get('/editor/dashboard'); handleMenuClose(); }}>
-                        <ListItemIcon>
-                            <RateReview sx={{ color: '#ef4444' }} />
-                        </ListItemIcon>
-                        Switch to Editor
-                    </MenuItem>
-                    <MenuItem onClick={() => { router.get('/student/dashboard'); handleMenuClose(); }}>
-                        <ListItemIcon>
-                            <Visibility sx={{ color: '#10b981' }} />
-                        </ListItemIcon>
-                        Switch to Student
                     </MenuItem>
                     
                     <Divider sx={{ backgroundColor: '#334155' }} />
@@ -628,6 +809,107 @@ const StudentDashboard = ({ publishedArticles, myComments, stats, favorites }) =
                         Logout
                     </MenuItem>
                 </Menu>
+
+                {/* Hero Section */}
+                <Box sx={{
+                    background: 'linear-gradient(135deg, #10b981 0%, #06b6d4 50%, #059669 100%)',
+                    py: 8,
+                    px: 3,
+                    position: 'relative',
+                    overflow: 'hidden',
+                    '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.08"%3E%3Ccircle cx="30" cy="30" r="4"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+                        opacity: 0.4
+                    },
+                    '&::after': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgba(255, 255, 255, 0.05) 0%, transparent 50%)',
+                        opacity: 0.6
+                    }
+                }}>
+                    <Box sx={{ position: 'relative', zIndex: 1, maxWidth: '1200px', mx: 'auto', textAlign: 'center' }}>
+                        <Typography 
+                            variant="h2" 
+                            sx={{ 
+                                color: '#ffffff', 
+                                fontWeight: 700,
+                                mb: 2,
+                                fontSize: { xs: '2rem', md: '3rem' },
+                                textShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                            }}
+                        >
+                            Student Reading Hub
+                        </Typography>
+                        <Typography 
+                            variant="h6" 
+                            sx={{ 
+                                color: 'rgba(255,255,255,0.9)', 
+                                mb: 4,
+                                maxWidth: '600px',
+                                mx: 'auto',
+                                lineHeight: 1.6
+                            }}
+                        >
+                            Discover engaging content, share your thoughts, and stay connected with campus publications. Your gateway to quality articles.
+                        </Typography>
+                        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+                            <Button
+                                variant="contained"
+                                onClick={() => setSelectedFilter('articles')}
+                                sx={{
+                                    bgcolor: 'rgba(255, 255, 255, 0.95)',
+                                    color: '#10b981',
+                                    px: 6,
+                                    py: 3,
+                                    fontWeight: 700,
+                                    fontSize: '1rem',
+                                    borderRadius: 12,
+                                    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.2)',
+                                    '&:hover': {
+                                        bgcolor: '#ffffff',
+                                        transform: 'translateY(-4px)',
+                                        boxShadow: '0 12px 32px rgba(0, 0, 0, 0.3)'
+                                    }
+                                }}
+                            >
+                                Browse Articles ({publishedArticles?.length || 0})
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                onClick={() => setSelectedFilter('comments')}
+                                sx={{
+                                    borderColor: 'rgba(255, 255, 255, 0.8)',
+                                    color: '#ffffff',
+                                    px: 6,
+                                    py: 3,
+                                    fontWeight: 700,
+                                    fontSize: '1rem',
+                                    borderRadius: 12,
+                                    borderWidth: 2,
+                                    '&:hover': {
+                                        borderColor: '#ffffff',
+                                        bgcolor: 'rgba(255, 255, 255, 0.15)',
+                                        transform: 'translateY(-4px)',
+                                        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.2)'
+                                    }
+                                }}
+                            >
+                                My Comments ({myComments?.length || 0})
+                            </Button>
+                        </Box>
+                    </Box>
+                </Box>
 
                 {/* Main Content */}
                 <Box sx={{ flexGrow: 1, display: 'flex' }}>
